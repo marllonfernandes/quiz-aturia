@@ -1,10 +1,8 @@
 <template>
-  <div class="flex flex-column align-items-center pt-5 px-3">
-    <!-- <div class="w-full mb-3 px-3" style="max-width: 30rem;">
-      <Button icon="pi pi-home" label="Voltar para Home" class="p-button-text" @click="$router.push('/')"
-        v-if="state === 'LOBBY'" />
-    </div> -->
-    <div class="w-full max-w-30rem p-4 glass-card text-center">
+  <div class="flex flex-column align-items-center pt-5 px-3"
+       :style="state === 'PLAYING' && currentTheme ? `background: url(${currentTheme}) center/cover fixed; min-height: 100vh; width: 100vw; position: absolute; top: 0; left: 0;` : 'min-height: 100vh; width: 100vw; position: absolute; top: 0; left: 0;'">
+    
+    <div class="w-full max-w-30rem p-4 glass-card text-center z-1">
 
       <!-- STATE: JOIN/LOBBY -->
       <div v-if="state === 'LOBBY'" class="w-full surface-card shadow-6 p-4 flex flex-column gap-4"
@@ -191,6 +189,7 @@ const hasAnswered = ref(false);
 const leaderboard = ref([]);
 const currentQuestionIndex = ref(0);
 const totalQuestions = ref(0);
+const currentTheme = ref(null);
 
 const currentAudio = ref(null);
 
@@ -247,6 +246,7 @@ onMounted(() => {
     totalQuestions.value = data.totalQuestions || 0;
     shortAnswerInput.value = ''; // Reset short answer input
     hasAnswered.value = false;
+    currentTheme.value = data.theme || null;
     
     playAudio(data.audioUrl);
   });

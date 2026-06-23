@@ -134,22 +134,33 @@ router.post('/', authMiddleware, async (req, res) => {
     if (!text || !type || !correctAnswer || (Array.isArray(correctAnswer) && correctAnswer.length === 0)) {
       return res.status(400).json({ error: 'Text, type and correctAnswer are required fields.' });
     }
+    
     const normalizedType = type ? type.toUpperCase().replace('-', '_') : 'MULTIPLE_CHOICE';
+
+    const questionData = {
+      text,
+      type: normalizedType,
+      options: JSON.stringify(options || []),
+      correctAnswer: JSON.stringify(correctAnswer),
+      timeLimit: parseInt(timeLimit) || 20,
+      points: parseInt(points) || 1000,
+      audioUrl: req.body.audioUrl || null,
+      theme: theme || null,
+      mediaUrl: mediaUrl || null
+    };
+
+    if (req.user && req.user.role !== 'admin') {
+      questionData.user = { connect: { id: req.user.id } };
+    }
+
+    if (quizId) {
+      questionData.quiz = { connect: { id: parseInt(quizId) } };
+    }
+
     const question = await prisma.question.create({
-      data: {
-        text,
-        type: normalizedType,
-        options: JSON.stringify(options || []),
-        correctAnswer: JSON.stringify(correctAnswer),
-        timeLimit: parseInt(timeLimit) || 20,
-        points: parseInt(points) || 1000,
-        userId: req.user.role === 'admin' ? null : req.user.id,
-        quizId: quizId ? parseInt(quizId) : null,
-        audioUrl: req.body.audioUrl || null,
-        theme: theme || null,
-        mediaUrl: mediaUrl || null
-      }
+      data: questionData
     });
+
     res.json(question);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -265,21 +276,31 @@ router.put('/:id', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'correctAnswer cannot be empty.' });
     }
     const normalizedType = type ? type.toUpperCase().replace('-', '_') : 'MULTIPLE_CHOICE';
+    const updateData = {
+      text: text !== undefined ? text : undefined,
+      type: type ? normalizedType : undefined,
+      options: options !== undefined ? JSON.stringify(options) : undefined,
+      correctAnswer: correctAnswer !== undefined ? JSON.stringify(correctAnswer) : undefined,
+      timeLimit: timeLimit !== undefined ? parseInt(timeLimit) : undefined,
+      points: points !== undefined ? parseInt(points) : undefined,
+      audioUrl: req.body.audioUrl !== undefined ? req.body.audioUrl : undefined,
+      theme: theme !== undefined ? theme : undefined,
+      mediaUrl: mediaUrl !== undefined ? mediaUrl : undefined
+    };
+
+    if (quizId !== undefined) {
+      if (quizId === null) {
+        updateData.quiz = { disconnect: true };
+      } else {
+        updateData.quiz = { connect: { id: parseInt(quizId) } };
+      }
+    }
+
     const question = await prisma.question.update({
       where: { id: questionId },
-      data: {
-        text,
-        type: normalizedType,
-        options: options ? JSON.stringify(options) : undefined,
-        correctAnswer: correctAnswer ? JSON.stringify(correctAnswer) : undefined,
-        timeLimit: timeLimit ? parseInt(timeLimit) : undefined,
-        points: points ? parseInt(points) : undefined,
-        quizId: quizId ? parseInt(quizId) : null,
-        audioUrl: req.body.audioUrl !== undefined ? req.body.audioUrl : undefined,
-        theme: theme !== undefined ? theme : undefined,
-        mediaUrl: mediaUrl !== undefined ? mediaUrl : undefined
-      }
+      data: updateData
     });
+
     res.json(question);
   } catch (error) {
     res.status(500).json({ error: error.message });

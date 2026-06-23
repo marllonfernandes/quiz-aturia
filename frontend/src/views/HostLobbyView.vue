@@ -1,9 +1,8 @@
 <template>
-  <div class="flex flex-column justify-content-center align-items-center pt-4 pb-5 px-3">
-    <!-- <div class="w-full mb-3" style="max-width: 900px;">
-      <Button icon="pi pi-home" label="Voltar para Home" class="p-button-text" @click="$router.push('/')" />
-    </div> -->
-    <div class="w-full glass-card shadow-6 p-4 md:p-5 flex flex-column gap-4 text-center"
+  <div class="flex flex-column justify-content-center align-items-center pt-4 pb-5 px-3"
+       :style="state === 'PLAYING' && currentQuestion?.theme ? `background: url(${currentQuestion.theme}) center/cover fixed; min-height: 100vh; width: 100vw; position: absolute; top: 0; left: 0;` : 'min-height: 100vh; width: 100vw; position: absolute; top: 0; left: 0;'">
+    
+    <div class="w-full glass-card shadow-6 p-4 md:p-5 flex flex-column gap-4 text-center z-1"
       style="max-width: 900px;">
 
       <!-- STATE: SETUP -->
@@ -35,8 +34,7 @@
             <div class="relative flex justify-content-center align-items-center mb-2 text-5xl">
               <span>{{ p.animal }}</span>
             </div>
-            <strong class="text-lg text-overflow-ellipsis overflow-hidden white-space-nowrap w-full">{{ p.name
-              }}</strong>
+            <strong class="text-lg text-overflow-ellipsis overflow-hidden white-space-nowrap w-full">{{ p.name }}</strong>
           </div>
         </div>
       </div>
@@ -45,6 +43,12 @@
       <div v-if="state === 'PLAYING'">
         <div class="text-500 mb-3 font-bold text-xl">Pergunta {{ currentQuestionIndex + 1 }} de {{ totalQuestions }}
         </div>
+        
+        <!-- Media (Cover Image/Gif) -->
+        <div v-if="currentQuestion?.mediaUrl" class="w-full flex justify-content-center mb-4">
+          <img :src="currentQuestion.mediaUrl" alt="Media da Pergunta" class="border-round shadow-4" style="max-height: 250px; max-width: 100%; object-fit: contain;" />
+        </div>
+
         <h1 class="text-4xl mb-5">{{ currentQuestion.text }}</h1>
 
         <div v-if="currentQuestion.type === 'MULTIPLE_CHOICE'" class="grid gap-3 max-w-full m-0">
