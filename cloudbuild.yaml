@@ -1,0 +1,48 @@
+# Cloud Build config: build multi-stage Dockerfile located at backend/Dockerfile
+# It builds the frontend (Vite) and backend via the Dockerfile, pushes the image
+# and deploys to Cloud Run.
+#
+# Trigger notes:
+# - To provide Vite build-time vars, configure substitutions in the Cloud Build
+#   trigger with names `_VITE_AI_API_KEY` and `_VITE_AUTHORIZED_EMAILS`, or use
+#   Secret Manager and mount secrets into the build steps.
+
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'Build image'
+  args:
+  - 'build'
+  - '-t'
+  - 'gcr.io/$PROJECT_ID/gameaturia:$SHORT_SHA'
+  - '-f'
+  - 'backend/Dockerfile'
+  - '--build-arg'
+  - 'VITE_AI_API_KEY=$_VITE_AI_API_KEY'
+  - '--build-arg'
+  - 'VITE_AUTHORIZED_EMAILS=$_VITE_AUTHORIZED_EMAILS'
+  - '.'
+
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'Push image'
+  args: ['push','gcr.io/$PROJECT_ID/gameaturia:$SHORT_SHA']
+
+- name: 'gcr.io/cloud-builders/gcloud'
+  id: 'Deploy to Cloud Run'
+  entrypoint: 'bash'
+  args:
+  - '-c'
+  - |
+    gcloud run deploy gameaturia \
+      --image gcr.io/$PROJECT_ID/gameaturia:$SHORT_SHA \
+      --region=us-central1 \
+      --platform=managed \
+      --allow-unauthenticated \
+      --set-env-vars DATABASE_URL="$DATABASE_URL",JWT_SECRET="$JWT_SECRET"
+
+images:
+- 'gcr.io/$PROJECT_ID/gameaturia:$SHORT_SHA'
+
+# Optional: declare substitutions defaults here (can be overridden in trigger)
+substitutions:
+  _VITE_AI_API_KEY: ""
+  _VITE_AUTHORIZED_EMAILS: ""
