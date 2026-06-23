@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        Int        @id @default(autoincrement())
+  email     String     @unique
+  name      String
+  googleId  String     @unique
+  avatar    String?
+  questions Question[]
+  quizzes   Quiz[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Quiz {
+  id          Int        @id @default(autoincrement())
+  title       String
+  userId      Int
+  user        User       @relation(fields: [userId], references: [id])
+  questions   Question[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Question {
+  id            Int      @id @default(autoincrement())
+  text          String
+  type          String   // e.g., "MULTIPLE_CHOICE", "TRUE_FALSE", "SINGLE_CHOICE"
+  options       String   // JSON string of options, e.g., ["A", "B", "C", "D"]
+  correctAnswer String   // The correct answer(s) (can be JSON if multiple)
+  timeLimit     Int      @default(20) // Time limit in seconds
+  points        Int      @default(1000) // Max points for this question
+  userId        Int?     // To support existing questions, we make this optional initially
+  user          User?    @relation(fields: [userId], references: [id])
+  quizId        Int?
+  quiz          Quiz?    @relation(fields: [quizId], references: [id])
+  audioUrl      String?  // Optional audio URL for the question background music
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
