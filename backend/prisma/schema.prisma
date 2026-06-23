@@ -41,6 +41,8 @@ model Question {
   quizId        Int?
   quiz          Quiz?    @relation(fields: [quizId], references: [id])
   audioUrl      String?  // Optional audio URL for the question background music
+  theme         String?  // Background theme for the question
+  mediaUrl      String?  // Cover image/gif for the question
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }

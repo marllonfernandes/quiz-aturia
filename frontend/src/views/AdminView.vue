@@ -144,6 +144,67 @@
           <Select v-model="newQ.audioUrl" :options="audioOptions" optionLabel="label" optionValue="value" placeholder="Áudio de Fundo" class="w-full" />
         </div>
 
+        <div class="flex flex-column gap-2 mt-2">
+          <label class="font-bold text-700">Tema de Fundo</label>
+          <div class="flex flex-wrap gap-3">
+            <div 
+              v-for="t in themeOptions" :key="t.label"
+              @click="newQ.theme = t.value"
+              class="cursor-pointer border-round-xl p-2 transition-all transition-duration-200 hover:shadow-3 flex flex-column align-items-center gap-2"
+              :class="newQ.theme === t.value ? 'border-primary border-2 shadow-2' : 'border-transparent border-2 surface-100 shadow-1'"
+              style="width: 100px;"
+            >
+              <div 
+                class="w-full h-4rem border-round-md bg-cover bg-center" 
+                :style="{ background: t.value ? `url('${t.value}')` : t.color }"
+              ></div>
+              <span class="text-xs text-center font-medium">{{ t.label }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-column gap-2 mt-2">
+          <label class="font-bold text-700">Mídia da Capa (Imagem/GIF)</label>
+          
+          <!-- Seleção rápida de mídia pré-definida -->
+          <div class="flex flex-wrap gap-2 mb-2">
+            <div 
+              v-for="(img, idx) in defaultMediaOptions" :key="idx"
+              @click="newQ.mediaUrl = img.url"
+              class="cursor-pointer border-round-xl overflow-hidden transition-all transition-duration-200 hover:shadow-3"
+              :class="newQ.mediaUrl === img.url ? 'border-primary border-3 shadow-2' : 'border-transparent border-3 surface-100 shadow-1'"
+              style="width: 80px; height: 60px;"
+            >
+              <img :src="img.url" :alt="img.label" class="w-full h-full" style="object-fit: cover;" />
+            </div>
+          </div>
+
+          <div class="flex gap-2 align-items-center">
+            <InputText v-model="newQ.mediaUrl" placeholder="Cole a URL ou faça upload" class="flex-1" />
+            
+            <div class="relative">
+              <input 
+                type="file" 
+                accept="image/*" 
+                @change="uploadMedia" 
+                class="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer" 
+                style="z-index: 2;"
+                :disabled="isUploading"
+              />
+              <Button 
+                :label="isUploading ? 'Enviando...' : 'Fazer Upload'" 
+                :icon="isUploading ? 'pi pi-spin pi-spinner' : 'pi pi-upload'" 
+                severity="secondary" 
+                outlined 
+                style="border-radius: 8px;"
+              />
+            </div>
+          </div>
+          <div v-if="newQ.mediaUrl" class="mt-2 border-round-xl overflow-hidden bg-gray-100 flex justify-content-center align-items-center shadow-1" style="height: 150px;">
+            <img :src="newQ.mediaUrl" alt="Media Preview" style="max-height: 100%; max-width: 100%; object-fit: contain;" />
+          </div>
+        </div>
+
         <div class="flex gap-2 mt-4">
           <Button label="Salvar" icon="pi pi-check" @click="createQuestion" class="flex-1" style="border-radius: 8px;" />
           <Button label="Cancelar" icon="pi pi-times" severity="secondary" outlined @click="isFormVisible = false" class="flex-1" style="border-radius: 8px;" />
@@ -314,6 +375,8 @@ const openAddQuestion = (quizId) => {
     shortAnswerText: '',
     timeLimit: 20,
     audioUrl: '',
+    theme: '',
+    mediaUrl: '',
     quizId: quizId === 'unassigned' ? null : quizId
   };
   isFormVisible.value = true;
@@ -330,6 +393,8 @@ const openEditQuestion = (q, quizId) => {
     shortAnswerText: q.type === 'SHORT_ANSWER' ? safeParseShortAnswer(q.correctAnswer) : '',
     timeLimit: q.timeLimit || 20,
     audioUrl: q.audioUrl || '',
+    theme: q.theme || '',
+    mediaUrl: q.mediaUrl || '',
     quizId: quizId === 'unassigned' ? null : quizId
   };
   isFormVisible.value = true;
@@ -346,6 +411,8 @@ const cloneQuestion = (q, quizId) => {
     shortAnswerText: q.type === 'SHORT_ANSWER' ? safeParseShortAnswer(q.correctAnswer) : '',
     timeLimit: q.timeLimit || 20,
     audioUrl: q.audioUrl || '',
+    theme: q.theme || '',
+    mediaUrl: q.mediaUrl || '',
     quizId: quizId === 'unassigned' ? null : quizId
   };
   isFormVisible.value = true;
@@ -401,8 +468,55 @@ const newQ = ref({
   shortAnswerText: '',
   timeLimit: 20,
   audioUrl: '',
+  theme: '',
+  mediaUrl: '',
   quizId: null
 });
+
+const isUploading = ref(false);
+
+const uploadMedia = async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  isUploading.value = true;
+  try {
+    const res = await axios.post(`${API_URL}/upload`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${token.value}`
+      }
+    });
+    newQ.value.mediaUrl = res.data.url;
+    toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Mídia enviada!', life: 3000 });
+  } catch (e) {
+    console.error(e);
+    toast.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao enviar mídia', life: 3000 });
+  } finally {
+    isUploading.value = false;
+  }
+};
+
+const themeOptions = ref([
+  { label: 'Padrão', value: '', color: '#f3f4f6' },
+  { label: 'Espaço', value: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&q=80&w=1000', color: '#1a1a2e' },
+  { label: 'Abstrato Azul', value: 'https://images.unsplash.com/photo-1557682250-33bd709cbe85?auto=format&fit=crop&q=80&w=1000', color: '#005bea' },
+  { label: 'Gradiente Quente', value: 'https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&q=80&w=1000', color: '#ff0844' },
+  { label: 'Geométrico', value: 'https://images.unsplash.com/photo-1505909182942-e2f09aee3e89?auto=format&fit=crop&q=80&w=1000', color: '#f5576c' },
+  { label: 'Cores Vibrantes', value: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=1000', color: '#4facfe' }
+]);
+
+const defaultMediaOptions = ref([
+  { label: 'Ciência', url: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&q=80&w=300' },
+  { label: 'Tecnologia', url: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=300' },
+  { label: 'Matemática', url: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&q=80&w=300' },
+  { label: 'Geografia', url: 'https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=300' },
+  { label: 'História', url: 'https://images.unsplash.com/photo-1461360370896-922624d12aa1?auto=format&fit=crop&q=80&w=300' },
+  { label: 'Arte', url: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&q=80&w=300' }
+]);
 
 const questionTypes = ref([
   { label: 'Quiz (Múltipla Escolha)', value: 'MULTIPLE_CHOICE' },
@@ -635,6 +749,8 @@ const createQuestion = async () => {
       correctAnswer: finalCorrectAnswer,
       timeLimit: newQ.value.timeLimit || 20,
       audioUrl: newQ.value.audioUrl || null,
+      theme: newQ.value.theme || null,
+      mediaUrl: newQ.value.mediaUrl || null,
       points: 1000,
       quizId: newQ.value.quizId
     };
@@ -657,6 +773,8 @@ const createQuestion = async () => {
     newQ.value.shortAnswerText = '';
     newQ.value.timeLimit = 20;
     newQ.value.audioUrl = '';
+    newQ.value.theme = '';
+    newQ.value.mediaUrl = '';
     
     activeQuizId.value = null;
     editingQuestionId.value = null;

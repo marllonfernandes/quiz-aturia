@@ -130,7 +130,7 @@ router.get('/', authMiddleware, async (req, res) => {
 // POST new question
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { text, type, options, correctAnswer, timeLimit, points, quizId } = req.body;
+    const { text, type, options, correctAnswer, timeLimit, points, quizId, theme, mediaUrl } = req.body;
     if (!text || !type || !correctAnswer || (Array.isArray(correctAnswer) && correctAnswer.length === 0)) {
       return res.status(400).json({ error: 'Text, type and correctAnswer are required fields.' });
     }
@@ -145,7 +145,9 @@ router.post('/', authMiddleware, async (req, res) => {
         points: parseInt(points) || 1000,
         userId: req.user.role === 'admin' ? null : req.user.id,
         quizId: quizId ? parseInt(quizId) : null,
-        audioUrl: req.body.audioUrl || null
+        audioUrl: req.body.audioUrl || null,
+        theme: theme || null,
+        mediaUrl: mediaUrl || null
       }
     });
     res.json(question);
@@ -258,7 +260,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: 'Not authorized to update this question' });
     }
 
-    const { text, type, options, correctAnswer, timeLimit, points, quizId } = req.body;
+    const { text, type, options, correctAnswer, timeLimit, points, quizId, theme, mediaUrl } = req.body;
     if (correctAnswer !== undefined && (!correctAnswer || (Array.isArray(correctAnswer) && correctAnswer.length === 0))) {
       return res.status(400).json({ error: 'correctAnswer cannot be empty.' });
     }
@@ -273,7 +275,9 @@ router.put('/:id', authMiddleware, async (req, res) => {
         timeLimit: timeLimit ? parseInt(timeLimit) : undefined,
         points: points ? parseInt(points) : undefined,
         quizId: quizId ? parseInt(quizId) : null,
-        audioUrl: req.body.audioUrl !== undefined ? req.body.audioUrl : undefined
+        audioUrl: req.body.audioUrl !== undefined ? req.body.audioUrl : undefined,
+        theme: theme !== undefined ? theme : undefined,
+        mediaUrl: mediaUrl !== undefined ? mediaUrl : undefined
       }
     });
     res.json(question);
