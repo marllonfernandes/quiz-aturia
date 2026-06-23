@@ -7,6 +7,8 @@
 #   trigger with names `_VITE_AI_API_KEY` and `_VITE_AUTHORIZED_EMAILS`, or use
 #   Secret Manager and mount secrets into the build steps.
 
+# v1
+
 steps:
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Build image'
