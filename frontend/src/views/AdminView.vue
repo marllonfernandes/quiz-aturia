@@ -1,22 +1,21 @@
 <template>
-  <div class="flex flex-column align-items-center min-h-screen pt-4 pb-5">
-    <div class="w-full mb-3 px-3" style="max-width: 800px;">
-      <Button icon="pi pi-home" label="Voltar para Home" class="p-button-text" @click="$router.push('/')" />
-    </div>
-
-    <div class="w-full px-3" style="max-width: 800px;">
-      <div class="surface-card shadow-6 p-4 md:p-5 flex flex-column gap-4" style="border-radius: 1.5rem;">
-        <h2 class="text-center m-0 pb-2" style="font-size: 2rem;">Admin Dashboard</h2>
+  <!-- DASHBOARD PRINCIPAL -->
+  <div v-if="!isFormVisible && !isAIGeneratorVisible" class="flex flex-column gap-4 w-full h-full pb-8 pt-3" style="background-color: #f9f9f9; padding-inline: 1rem; min-height: 100vh;">
+    <div class="w-full mx-auto" style="max-width: 800px;">
+      <div class="flex flex-column gap-4">
+        <div class="flex justify-content-between align-items-center">
+          <h2 class="m-0" style="font-size: 1.5rem;"><i class="pi pi-cog mr-2"></i>Admin Dashboard</h2>
+          <Button v-if="token" label="Sair" icon="pi pi-sign-out" severity="danger" @click="logout" size="small" outlined />
+        </div>
         
-        <div v-if="!token" class="flex flex-column align-items-center justify-content-center">
-          <p class="mb-4">Log in to manage your questions</p>
+        <div v-if="!token" class="flex flex-column align-items-center justify-content-center bg-white p-5 border-round-xl border-1 border-gray-200 mt-4">
+          <p class="mb-4 text-center font-medium">Faça login para gerenciar suas perguntas</p>
           <GoogleLogin :callback="handleLogin" />
         </div>
         
         <div v-else class="flex flex-column gap-4">
-          <div class="flex justify-content-between align-items-center">
-            <Button label="Atualizar" icon="pi pi-refresh" @click="fetchData" size="small" />
-            <Button label="Sair" icon="pi pi-sign-out" severity="danger" @click="logout" size="small" />
+          <div class="flex justify-content-end">
+            <Button label="Atualizar" icon="pi pi-refresh" @click="fetchData" size="small" outlined />
           </div>
 
           <!-- TOKEN DE AUTOMAÇÃO / AGENTES DE IA -->
@@ -105,8 +104,17 @@
         </div>
       </div>
     </div>
-    <Dialog v-model:visible="isFormVisible" :header="editingQuestionId ? 'Editar Pergunta' : 'Nova Pergunta'" :style="{ width: '50vw' }" :breakpoints="{ '960px': '75vw', '640px': '90vw' }" modal>
-      <div class="flex flex-column gap-3 pt-3">
+  </div>
+
+  <!-- TELA DE CRIAR/EDITAR PERGUNTA -->
+  <div v-if="isFormVisible" class="flex flex-column gap-4 w-full h-full pb-8 pt-3" style="background-color: #f9f9f9; padding-inline: 1rem; min-height: 100vh;">
+    <div class="w-full mx-auto bg-white p-4 border-round-xl shadow-1" style="max-width: 800px;">
+      <div class="flex justify-content-between align-items-center mb-4">
+        <h2 class="m-0">{{ editingQuestionId ? 'Editar Pergunta' : 'Nova Pergunta' }}</h2>
+        <Button icon="pi pi-times" severity="secondary" text rounded @click="isFormVisible = false" />
+      </div>
+
+      <div class="flex flex-column gap-3">
         <Select v-model="newQ.type" :options="questionTypes" optionLabel="label" optionValue="value" class="w-full" />
         
         <InputText v-model="newQ.text" placeholder="Texto da Pergunta" class="w-full" />
@@ -136,36 +144,42 @@
           <Select v-model="newQ.audioUrl" :options="audioOptions" optionLabel="label" optionValue="value" placeholder="Áudio de Fundo" class="w-full" />
         </div>
 
-        <div class="flex gap-2 mt-2">
-          <Button label="Salvar" icon="pi pi-check" @click="createQuestion" class="flex-1" style="border-radius: 1rem;" />
-          <Button label="Cancelar" icon="pi pi-times" severity="secondary" outlined @click="isFormVisible = false" class="flex-1" style="border-radius: 1rem;" />
+        <div class="flex gap-2 mt-4">
+          <Button label="Salvar" icon="pi pi-check" @click="createQuestion" class="flex-1" style="border-radius: 8px;" />
+          <Button label="Cancelar" icon="pi pi-times" severity="secondary" outlined @click="isFormVisible = false" class="flex-1" style="border-radius: 8px;" />
         </div>
       </div>
-    </Dialog>
+    </div>
+  </div>
 
-    <Dialog v-model:visible="isAIGeneratorVisible" header="Gerar Perguntas com IA" :style="{ width: '50vw' }" :breakpoints="{ '960px': '75vw', '640px': '90vw' }" modal>
-      <div v-if="!isPreviewMode" class="flex flex-column gap-3 pt-3">
+  <!-- TELA DE GERAR COM IA -->
+  <div v-if="isAIGeneratorVisible" class="flex flex-column gap-4 w-full h-full pb-8 pt-3" style="background-color: #f9f9f9; padding-inline: 1rem; min-height: 100vh;">
+    <div class="w-full mx-auto bg-white p-4 border-round-xl shadow-1" style="max-width: 800px;">
+      <div class="flex justify-content-between align-items-center mb-4">
+        <h2 class="m-0">Gerar Perguntas com IA</h2>
+        <Button icon="pi pi-times" severity="secondary" text rounded @click="isAIGeneratorVisible = false" />
+      </div>
+
+      <div v-if="!isPreviewMode" class="flex flex-column gap-3">
         <Select v-model="aiProvider" :options="aiProviders" optionLabel="label" optionValue="value" placeholder="Selecione a IA" class="w-full" />
         <InputText v-model="aiApiKey" type="password" placeholder="Chave de API (Será salva localmente)" class="w-full" />
         
-        <Select v-model="aiQuestionType" :options="questionTypes" optionLabel="label" optionValue="value" class="w-full" @change="updateDefaultInstructions" />
+        <Select v-model="aiQuestionType" :options="questionTypes" optionLabel="label" optionValue="value" placeholder="Tipo de Pergunta" class="w-full" />
         
-        <Textarea v-model="aiTopic" placeholder="Descreva as perguntas que deseja gerar (Ex: Gere 5 perguntas divertidas sobre Geografia do Brasil)" rows="3" class="w-full" />
-        
-        <div class="flex flex-column gap-1">
-          <label class="text-sm font-bold text-500">Instruções adicionais para o modelo (Opcional)</label>
+        <div class="flex flex-column gap-2">
+          <InputText v-model="aiTopic" placeholder="Tema ou Texto base" class="w-full" />
           <Textarea v-model="aiInstructions" placeholder="Ex: As perguntas devem ser difíceis. Quero 4 opções de resposta para múltipla escolha e 30 segundos para responder." rows="2" class="w-full" />
         </div>
 
-        <div class="flex gap-2 mt-2">
-          <Button label="Gerar Perguntas" icon="pi pi-sparkles" severity="help" @click="generateQuestions" class="flex-1" :loading="isGenerating" style="border-radius: 1rem;" />
-          <Button label="Cancelar" icon="pi pi-times" severity="secondary" outlined @click="isAIGeneratorVisible = false" class="flex-1" :disabled="isGenerating" style="border-radius: 1rem;" />
+        <div class="flex gap-2 mt-4">
+          <Button label="Gerar Perguntas" icon="pi pi-sparkles" severity="help" @click="generateQuestions" :loading="isGenerating" class="flex-1" style="border-radius: 8px;" />
+          <Button label="Cancelar" icon="pi pi-times" severity="secondary" outlined @click="isAIGeneratorVisible = false" class="flex-1" :disabled="isGenerating" style="border-radius: 8px;" />
         </div>
       </div>
 
-      <div v-else class="flex flex-column gap-3 pt-3">
-        <div class="overflow-y-auto flex flex-column gap-3" style="max-height: 50vh;">
-          <div v-for="(q, index) in aiGeneratedQuestions" :key="index" class="surface-100 p-3 border-round shadow-1">
+      <div v-else class="flex flex-column gap-3">
+        <div class="surface-100 p-3 shadow-1" style="border-radius: 1rem; max-height: 50vh; overflow-y: auto;">
+          <div v-for="(q, index) in aiGeneratedQuestions" :key="index" class="mb-4 border-bottom-1 surface-border pb-3 last:border-none">
             <div class="font-bold mb-2">{{ index + 1 }}. {{ q.text }}</div>
             <div v-if="q.options && q.options.length" class="text-sm mb-1">
               <strong>Opções:</strong> {{ q.options.join(', ') }}
@@ -179,12 +193,12 @@
             <div class="text-xs text-500 mt-1">Tempo: {{ q.timeLimit || 20 }}s</div>
           </div>
         </div>
-        <div class="flex gap-2 mt-2">
-          <Button label="Salvar Perguntas" icon="pi pi-check" severity="success" @click="saveGeneratedQuestions" class="flex-1" :loading="isSaving" style="border-radius: 1rem;" />
-          <Button label="Voltar e Editar" icon="pi pi-arrow-left" severity="secondary" outlined @click="isPreviewMode = false" class="flex-1" :disabled="isSaving" style="border-radius: 1rem;" />
+        <div class="flex gap-2 mt-4">
+          <Button label="Salvar Perguntas" icon="pi pi-check" severity="success" @click="saveGeneratedQuestions" class="flex-1" :loading="isSaving" style="border-radius: 8px;" />
+          <Button label="Voltar e Editar" icon="pi pi-arrow-left" severity="secondary" outlined @click="isPreviewMode = false" class="flex-1" :disabled="isSaving" style="border-radius: 8px;" />
         </div>
       </div>
-    </Dialog>
+    </div>
   </div>
 </template>
 
@@ -192,6 +206,7 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
+import { setUser } from '../auth';
 import axios from 'axios';
 import Card from 'primevue/card';
 import Button from 'primevue/button';
@@ -478,6 +493,7 @@ const handleLogin = async (response) => {
     const res = await axios.post(`${API_URL}/auth/google`, { credential: response.credential });
     token.value = res.data.token;
     localStorage.setItem('admin_token', token.value);
+    setUser(res.data.user);
     fetchData();
   } catch(e) {
     console.error(e);
@@ -489,6 +505,7 @@ const logout = () => {
   token.value = '';
   localStorage.removeItem('admin_token');
   localStorage.removeItem('automation_token');
+  setUser(null);
   automationToken.value = '';
   questions.value = [];
   quizzes.value = [];

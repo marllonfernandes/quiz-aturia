@@ -1,10 +1,10 @@
 <template>
-  <div class="flex flex-column justify-content-center align-items-center min-h-screen pt-4 pb-5 px-3">
-    <div class="w-full mb-3" style="max-width: 900px;">
+  <div class="flex flex-column justify-content-center align-items-center pt-4 pb-5 px-3">
+    <!-- <div class="w-full mb-3" style="max-width: 900px;">
       <Button icon="pi pi-home" label="Voltar para Home" class="p-button-text" @click="$router.push('/')" />
-    </div>
-    <div class="w-full surface-card shadow-6 p-4 md:p-5 flex flex-column gap-4 text-center"
-      style="max-width: 900px; border-radius: 1.5rem;">
+    </div> -->
+    <div class="w-full glass-card shadow-6 p-4 md:p-5 flex flex-column gap-4 text-center"
+      style="max-width: 900px;">
 
       <!-- STATE: SETUP -->
       <div v-if="state === 'SETUP'" class="flex flex-column align-items-center w-full">
@@ -19,9 +19,9 @@
       </div>
 
       <!-- STATE: LOBBY -->
-      <div v-if="state === 'LOBBY'">
-        <h1 class="text-4xl m-0">Join with PIN:</h1>
-        <h1 class="text-primary m-0 mb-4" style="font-size: 6rem; letter-spacing: 10px;">{{ pin }}</h1>
+      <div v-if="state === 'LOBBY'" class="flex flex-column align-items-center w-full">
+        <h1 class="text-3xl m-0 text-center">Join with PIN:</h1>
+        <h1 class="text-primary m-0 mb-4 text-center" style="font-size: 3.5rem; letter-spacing: 5px;">{{ pin }}</h1>
 
         <div class="mb-5">
           <Button label="Iniciar Jogo" size="large" @click="startGame" :disabled="players.length === 0" class="w-full"

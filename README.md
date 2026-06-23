@@ -1,6 +1,6 @@
 # GameAturiá 🦁🎮
 
-Um jogo online multiplayer de perguntas e respostas, no estilo Kahoot, desenvolvido com Node.js, Vue 3, Socket.IO e Supabase.
+Um jogo online multiplayer de perguntas e respostas, desenvolvido com Node.js, Vue 3, Socket.IO e Supabase.
 
 ## 🚀 Como iniciar o projeto pela primeira vez
 

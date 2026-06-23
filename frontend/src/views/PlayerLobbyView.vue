@@ -1,10 +1,10 @@
 <template>
-  <div class="flex flex-column align-items-center pt-5 min-h-screen">
-    <div class="w-full mb-3 px-3" style="max-width: 30rem;">
+  <div class="flex flex-column align-items-center pt-5 px-3">
+    <!-- <div class="w-full mb-3 px-3" style="max-width: 30rem;">
       <Button icon="pi pi-home" label="Voltar para Home" class="p-button-text" @click="$router.push('/')"
         v-if="state === 'LOBBY'" />
-    </div>
-    <div class="w-full max-w-30rem p-3">
+    </div> -->
+    <div class="w-full max-w-30rem p-4 glass-card text-center">
 
       <!-- STATE: JOIN/LOBBY -->
       <div v-if="state === 'LOBBY'" class="w-full surface-card shadow-6 p-4 flex flex-column gap-4"
