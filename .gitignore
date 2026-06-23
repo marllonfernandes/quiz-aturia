@@ -89,15 +89,11 @@ dist
 # https://nextjs.org/blog/next-9-1#public-directory-support
 # public
 
-# vuepress build output
-.vuepress/dist
-
-# vuepress v2.x temp directory
-.temp
-
-# Sveltekit cache directory
-.svelte-kit/
-
+# === Project-specific: ignore everything in backend/public ===
+# backend/public contains built frontend artifacts; do not track any files
+# from there to avoid committing build outputs.
+backend/public/
+# backend/public/**
 # vitepress build output
 **/.vitepress/dist
 
