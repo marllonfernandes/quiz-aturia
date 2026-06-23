@@ -348,12 +348,10 @@ const isAuthorizedUserForDefaultKey = () => {
   if (!token.value) return false;
   const decoded = decodeToken(token.value);
   if (!decoded || !decoded.email) return false;
-  const authorizedEmails = [
-    'arthurmessiasdasilva@gmail.com',
-    'ellen.diguinha@gmail.com',
-    'fefera.messi@gmail.com',
-    'marllon.mfb@gmail.com'
-  ];
+  const authorizedEmails = (import.meta.env.VITE_AUTHORIZED_EMAILS || '')
+    .split(',')
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
   return authorizedEmails.includes(decoded.email.toLowerCase());
 };
 
@@ -374,7 +372,7 @@ const openAIGenerator = (quizId) => {
   
   if (isAuthorizedUserForDefaultKey()) {
     aiProvider.value = 'gemini';
-    aiApiKey.value = '[REDACTED_GCP_API_KEY]';
+    aiApiKey.value = import.meta.env.VITE_AI_API_KEY || '';
   }
   
   isAIGeneratorVisible.value = true;
