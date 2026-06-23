@@ -40,6 +40,7 @@ steps:
       --region=us-central1 \
       --platform=managed \
       --allow-unauthenticated \
+      --service-account=1094295943535-compute@developer.gserviceaccount.com \
       --set-secrets DATABASE_URL=DATABASE_URL:latest,JWT_SECRET=JWT_SECRET:latest
 
 images:
