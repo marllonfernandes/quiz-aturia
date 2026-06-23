@@ -8,18 +8,17 @@ WORKDIR /workspace/frontend
 # Build-time args for Vite environment variables
 ARG VITE_AI_API_KEY
 ARG VITE_AUTHORIZED_EMAILS
-ENV VITE_AI_API_KEY=${VITE_AI_API_KEY}
-ENV VITE_AUTHORIZED_EMAILS=${VITE_AUTHORIZED_EMAILS}
 
 COPY frontend/package*.json ./
 RUN npm ci
 COPY frontend/ ./
-RUN npm run build
+RUN VITE_AI_API_KEY="$VITE_AI_API_KEY" VITE_AUTHORIZED_EMAILS="$VITE_AUTHORIZED_EMAILS" npm run build -- --outDir dist
 
 FROM node:20-bullseye-slim AS backend-build
 WORKDIR /workspace/backend
 
 COPY backend/package*.json ./
+COPY backend/prisma ./prisma
 RUN npm ci --omit=dev
 COPY backend/ ./
 

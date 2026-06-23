@@ -17,10 +17,13 @@ steps:
   - '-f'
   - 'backend/Dockerfile'
   - '--build-arg'
-  - 'VITE_AI_API_KEY=$_VITE_AI_API_KEY'
+  - 'VITE_AI_API_KEY=$VITE_AI_API_KEY'
   - '--build-arg'
-  - 'VITE_AUTHORIZED_EMAILS=$_VITE_AUTHORIZED_EMAILS'
+  - 'VITE_AUTHORIZED_EMAILS=$VITE_AUTHORIZED_EMAILS'
   - '.'
+  secretEnv:
+  - VITE_AI_API_KEY
+  - VITE_AUTHORIZED_EMAILS
 
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Push image'
@@ -37,12 +40,14 @@ steps:
       --region=us-central1 \
       --platform=managed \
       --allow-unauthenticated \
-      --set-env-vars DATABASE_URL="$DATABASE_URL",JWT_SECRET="$JWT_SECRET"
+      --set-secrets DATABASE_URL=DATABASE_URL:latest,JWT_SECRET=JWT_SECRET:latest
 
 images:
 - 'gcr.io/$PROJECT_ID/gameaturia:$SHORT_SHA'
 
-# Optional: declare substitutions defaults here (can be overridden in trigger)
-substitutions:
-  _VITE_AI_API_KEY: ""
-  _VITE_AUTHORIZED_EMAILS: ""
+secrets:
+- secretEnv:
+    VITE_AI_API_KEY: projects/$PROJECT_ID/secrets/VITE_AI_API_KEY/versions/latest
+    VITE_AUTHORIZED_EMAILS: projects/$PROJECT_ID/secrets/VITE_AUTHORIZED_EMAILS/versions/latest
+    DATABASE_URL: projects/$PROJECT_ID/secrets/DATABASE_URL/versions/latest
+    JWT_SECRET: projects/$PROJECT_ID/secrets/JWT_SECRET/versions/latest
