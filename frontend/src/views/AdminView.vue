@@ -84,6 +84,12 @@
               </div>
               
               <div v-show="isQuizExpanded(group.id)">
+                <!-- Botões de ação no topo -->
+                <div class="flex gap-2 mb-3 pb-3 border-bottom-1 surface-border">
+                  <Button label="Adicionar Pergunta" icon="pi pi-plus" outlined class="flex-1" style="border-radius: 1rem;" @click="openAddQuestion(group.id)" />
+                  <Button label="Gerar com IA" icon="pi pi-sparkles" severity="help" outlined class="flex-1" style="border-radius: 1rem;" @click="openAIGenerator(group.id)" />
+                </div>
+
                 <div v-if="group.questions.length === 0" class="text-500 text-sm mb-3">Nenhuma pergunta neste quiz.</div>
                 
                 <div class="flex flex-column gap-3 mb-3">
@@ -116,11 +122,7 @@
                   </div>
                 </div>
 
-                <!-- Formulário para adicionar nova pergunta neste quiz -->
-                <div class="mt-2 border-top-1 surface-border pt-3 flex gap-2">
-                  <Button label="Adicionar Pergunta" icon="pi pi-plus" outlined class="flex-1" style="border-radius: 1rem;" @click="openAddQuestion(group.id)" />
-                  <Button label="Gerar com IA" icon="pi pi-sparkles" severity="help" outlined class="flex-1" style="border-radius: 1rem;" @click="openAIGenerator(group.id)" />
-                </div>
+
               </div>
             </div>
           </div>
@@ -335,6 +337,7 @@ import Tag from 'primevue/tag';
 import InputNumber from 'primevue/inputnumber';
 import Dialog from 'primevue/dialog';
 import Textarea from 'primevue/textarea';
+import MultiSelect from 'primevue/multiselect';
 
 const router = useRouter();
 const toast = useToast();
@@ -395,7 +398,7 @@ const selectedKnowledgeBases = ref([]);
 
 watch(knowledgeList, (newList) => {
   selectedKnowledgeBases.value = newList.map(k => k.id);
-});
+}, { immediate: true });
 
 const aiSourceOptions = ref([
   { label: 'Internet', value: 'internet' },
@@ -1063,6 +1066,7 @@ const saveGeneratedQuestions = async () => {
         correctAnswer: finalCorrectAnswer,
         timeLimit: q.timeLimit || 20,
         points: 1000,
+        backgroundAudio: '/sounds/fun.mp3',
         quizId: activeQuizId.value
       };
       
