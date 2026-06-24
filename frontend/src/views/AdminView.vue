@@ -62,15 +62,19 @@
 
           <!-- QUIZZES E PERGUNTAS UNIFICADO -->
           <div class="surface-100 p-4 shadow-2 flex flex-column gap-3 mb-2" style="border-radius: 1rem;">
-            <h3 class="m-0 text-xl text-center">Titulo Quiz</h3>
-            <div class="flex gap-2">
-              <InputText v-model="newQuizTitle" placeholder="Digite o título do quiz" class="w-full" />
-              <Button icon="pi pi-plus" @click="createQuiz" />
+            <div class="flex justify-content-between align-items-center">
+              <h3 class="m-0 text-xl"><i class="pi pi-folder mr-2"></i>Meus Quizzes</h3>
             </div>
-          </div>
+            <p class="text-sm text-600 m-0">
+              Crie e gerencie agrupadores (quizzes) para organizar suas perguntas e hospedar jogos.
+            </p>
+            <div class="flex gap-2 mt-2 mb-3">
+              <InputText v-model="newQuizTitle" placeholder="Digite o título do novo quiz" class="w-full" />
+              <Button label="Criar Quiz" icon="pi pi-plus" @click="createQuiz" />
+            </div>
           
-          <div v-if="quizzes.length === 0 && questions.length === 0" class="text-center text-500 py-3">Nenhum agrupador criado.</div>
-          <div v-else class="flex flex-column gap-4">
+            <div v-if="quizzes.length === 0 && questions.length === 0" class="text-center text-500 py-3">Nenhum agrupador criado.</div>
+            <div v-else class="flex flex-column gap-4">
             <div v-for="group in questionsByQuiz" :key="group.id" class="surface-card p-4 shadow-2" style="border-radius: 1rem; border: 1px solid var(--surface-border);">
               <div class="flex justify-content-between align-items-center mb-3 border-bottom-1 surface-border pb-2">
                 <h4 class="m-0 text-xl text-primary cursor-pointer hover:text-primary-600 transition-colors flex align-items-center gap-2" @click="toggleQuiz(group.id)" title="Clique para expandir/minimizar o quiz">
@@ -125,6 +129,7 @@
 
               </div>
             </div>
+          </div>
           </div>
 
         </div>

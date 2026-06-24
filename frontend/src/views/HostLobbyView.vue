@@ -7,11 +7,11 @@
 
       <!-- STATE: SETUP -->
       <div v-if="state === 'SETUP'" class="flex flex-column align-items-center w-full">
-        <h1 class="text-4xl mb-4">Escolha o Agrupador para Hospedar</h1>
-        <div v-if="quizzes.length === 0" class="text-xl text-500 mb-5">Você não possui agrupadores.</div>
+        <h1 class="text-4xl mb-4">Escolha o Quiz</h1>
+        <div v-if="quizzes.length === 0" class="text-xl text-500 mb-5">Você não possui quizzes.</div>
         <div class="w-full flex flex-column gap-3 mb-5">
           <Select v-model="selectedQuizId" :options="quizzes" optionLabel="title" optionValue="id"
-            placeholder="Selecione um Agrupador (Opcional)" class="w-full" style="max-width: 400px; margin: 0 auto;" />
+            placeholder="Selecione um Quiz" class="w-full" style="max-width: 400px; margin: 0 auto;" />
         </div>
         <Button label="Criar Sala" size="large" @click="createRoom" class="w-full"
           style="max-width: 300px; border-radius: 1rem;" />
@@ -87,12 +87,24 @@
       <div v-if="state === 'LEADERBOARD'" class="flex flex-column align-items-center w-full">
         <h1 class="text-4xl mb-4">Classificação (Ranking)</h1>
 
-        <div class="w-full flex flex-column gap-2 max-w-max mb-5">
-          <div v-for="(p, index) in leaderboard" :key="index"
-            class="surface-100 p-3 shadow-1 flex align-items-center justify-content-between"
+        <TransitionGroup name="leaderboard" tag="div" class="w-full flex flex-column gap-2 max-w-max mb-5 relative">
+          <div v-for="(p, index) in leaderboard" :key="p.id"
+            class="surface-100 p-3 shadow-1 flex align-items-center justify-content-between leaderboard-item"
             style="border-radius: 1rem; min-width: 280px;">
             <div class="flex align-items-center gap-3">
               <span class="font-bold text-xl text-500">#{{ index + 1 }}</span>
+              
+              <!-- AnimeJS Rank Indicator -->
+              <div v-if="p.rankChange > 0" class="rank-icon flex align-items-center justify-content-center bg-green-100 border-circle p-1" style="width: 28px; height: 28px;">
+                 <i class="pi pi-arrow-up text-green-500 font-bold" style="font-size: 1rem;"></i>
+              </div>
+              <div v-else-if="p.rankChange < 0" class="rank-icon flex align-items-center justify-content-center bg-red-100 border-circle p-1" style="width: 28px; height: 28px;">
+                 <i class="pi pi-arrow-down text-red-500 font-bold" style="font-size: 1rem;"></i>
+              </div>
+              <div v-else class="rank-icon flex align-items-center justify-content-center bg-gray-100 border-circle p-1" style="width: 28px; height: 28px;">
+                 <i class="pi pi-minus text-gray-500 font-bold" style="font-size: 1rem;"></i>
+              </div>
+
               <div class="relative flex justify-content-center align-items-center text-2xl" style="width: 2rem;">
                 <span>{{ p.animal }}</span>
               </div>
@@ -100,7 +112,7 @@
             </div>
             <span class="text-xl text-green-500 font-bold ml-4">{{ p.score }} pts</span>
           </div>
-        </div>
+        </TransitionGroup>
 
         <Button :label="isLastQuestion ? 'Finalizar Jogo e Ver Pódio' : 'Próxima Pergunta'" size="large"
           @click="nextQuestion" class="w-full" style="max-width: 300px; border-radius: 1rem;" />
@@ -171,9 +183,7 @@
             <div class="flex align-items-center gap-3">
               <span class="font-bold text-xl text-500">#{{ index + 1 }}</span>
               <div class="relative flex justify-content-center align-items-center text-2xl" style="width: 2rem;">
-                <span>{{ getAnimalEmoji(p.animal) }}</span>
-                <span class="absolute" style="top: -5px; transform: scale(0.8);">{{ getHatEmoji(p.hat) }}</span>
-                <span class="absolute" style="top: 10px; transform: scale(0.8);">{{ getGlassesEmoji(p.glasses) }}</span>
+                <span>{{ p.animal }}</span>
               </div>
               <span class="text-xl font-bold">{{ p.name }}</span>
             </div>
@@ -190,7 +200,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
+import { animate, stagger } from 'animejs';
 import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import { socket } from '../socket';
@@ -327,9 +338,39 @@ onMounted(() => {
 
   socket.on('show_leaderboard', (board) => {
     state.value = 'LEADERBOARD';
-    leaderboard.value = board;
+    
+    // Calculate rankChange
+    const currentBoard = leaderboard.value || [];
+    const enrichedBoard = board.map((p, newIndex) => {
+      const oldIndex = currentBoard.findIndex(oldP => oldP.id === p.id);
+      let rankChange = 0;
+      if (oldIndex !== -1) {
+        rankChange = oldIndex - newIndex;
+      }
+      return { ...p, rankChange };
+    });
+
+    leaderboard.value = enrichedBoard;
     clearInterval(timer);
     stopAudio();
+
+    nextTick(() => {
+      animate('.leaderboard-item', {
+        scale: [0.95, 1],
+        opacity: [0, 1],
+        delay: stagger(100),
+        duration: 800,
+        ease: 'outElastic(1, .8)'
+      });
+
+      animate('.rank-icon', {
+        rotate: [-180, 0],
+        scale: [0, 1],
+        delay: stagger(100),
+        duration: 1000,
+        ease: 'outElastic(1, .5)'
+      });
+    });
   });
 
   socket.on('game_over', (board) => {
@@ -345,3 +386,24 @@ onUnmounted(() => {
   stopAudio();
 });
 </script>
+
+<style scoped>
+/* Leaderboard animations */
+.leaderboard-move,
+.leaderboard-enter-active,
+.leaderboard-leave-active {
+  transition: all 0.5s cubic-bezier(0.55, 0, 0.1, 1);
+}
+
+.leaderboard-enter-from,
+.leaderboard-leave-to {
+  opacity: 0;
+  transform: scaleY(0.01) translate(30px, 0);
+}
+
+.leaderboard-leave-active {
+  position: absolute;
+  width: 100%;
+}
+</style>
+
