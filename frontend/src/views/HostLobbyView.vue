@@ -51,23 +51,23 @@
 
         <h1 class="text-4xl mb-5">{{ currentQuestion.text }}</h1>
 
-        <div v-if="currentQuestion.type === 'MULTIPLE_CHOICE'" class="grid gap-3 max-w-full m-0">
+        <div v-if="currentQuestion.type === 'MULTIPLE_CHOICE'" class="grid gap-2 max-w-full m-0">
           <div v-for="(opt, idx) in currentQuestion.options" :key="idx"
-            :class="['col-12 md:col flex align-items-center justify-content-center shadow-2 p-3 font-bold', getOptionColorClass(idx)]"
-            style="min-height: 100px; font-size: 1.5rem; border-radius: 1rem;">
+            :class="['col-12 md:col-6 lg:col-4 flex align-items-center justify-content-center shadow-2 p-3 font-bold', getOptionColorClass(idx)]"
+            style="min-height: 80px; font-size: 1.5rem; border-radius: 1rem; word-break: break-word;">
             {{ opt }}
           </div>
         </div>
 
-        <div v-else-if="currentQuestion.type === 'TRUE_FALSE'" class="grid gap-3 max-w-full m-0">
+        <div v-else-if="currentQuestion.type === 'TRUE_FALSE'" class="grid gap-2 max-w-full m-0">
           <div
-            class="col-12 md:col bg-primary flex align-items-center justify-content-center shadow-2 text-white font-bold p-3"
-            style="min-height: 100px; font-size: 2rem; border-radius: 1rem;">
+            class="col-12 md:col-6 bg-primary flex align-items-center justify-content-center shadow-2 text-white font-bold p-3"
+            style="min-height: 80px; font-size: 2rem; border-radius: 1rem;">
             Verdadeiro
           </div>
           <div
-            class="col-12 md:col bg-red-500 flex align-items-center justify-content-center shadow-2 text-white font-bold p-3"
-            style="min-height: 100px; font-size: 2rem; border-radius: 1rem;">
+            class="col-12 md:col-6 bg-red-500 flex align-items-center justify-content-center shadow-2 text-white font-bold p-3"
+            style="min-height: 80px; font-size: 2rem; border-radius: 1rem;">
             Falso
           </div>
         </div>
