@@ -48,11 +48,11 @@
             <div v-if="knowledgeList.length === 0" class="text-center text-500 py-2 text-sm">Nenhum conhecimento cadastrado.</div>
             <div v-else class="flex flex-column gap-2 mt-2">
               <div v-for="k in knowledgeList" :key="k.id" class="flex justify-content-between align-items-center bg-white p-3 border-round shadow-1">
-                <div>
+                <div class="flex-1 overflow-hidden pr-3">
                   <h4 class="m-0 text-md">{{ k.title }}</h4>
-                  <p class="m-0 text-sm text-600 overflow-hidden text-overflow-ellipsis white-space-nowrap" style="max-width: 300px;">{{ k.content }}</p>
+                  <p class="m-0 text-sm text-600 overflow-hidden text-overflow-ellipsis white-space-nowrap">{{ k.content }}</p>
                 </div>
-                <div class="flex gap-2">
+                <div class="flex gap-2 flex-shrink-0">
                   <Button icon="pi pi-pencil" text rounded severity="secondary" @click="openEditKnowledge(k)" />
                   <Button icon="pi pi-trash" text rounded severity="danger" @click="deleteKnowledge(k.id)" />
                 </div>
