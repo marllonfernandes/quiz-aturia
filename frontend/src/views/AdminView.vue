@@ -36,6 +36,30 @@
             </div>
           </div>
 
+          <!-- BASE DE CONHECIMENTO -->
+          <div class="surface-100 p-4 shadow-2 flex flex-column gap-3 mb-2" style="border-radius: 1rem;">
+            <div class="flex justify-content-between align-items-center">
+              <h3 class="m-0 text-xl"><i class="pi pi-book mr-2"></i>Base de Conhecimento Pessoal</h3>
+              <Button icon="pi pi-plus" label="Novo Conhecimento" size="small" @click="openAddKnowledge" />
+            </div>
+            <p class="text-sm text-600 m-0">
+              Armazene textos e informações que a IA poderá usar como contexto exclusivo ao gerar perguntas.
+            </p>
+            <div v-if="knowledgeList.length === 0" class="text-center text-500 py-2 text-sm">Nenhum conhecimento cadastrado.</div>
+            <div v-else class="flex flex-column gap-2 mt-2">
+              <div v-for="k in knowledgeList" :key="k.id" class="flex justify-content-between align-items-center bg-white p-3 border-round shadow-1">
+                <div>
+                  <h4 class="m-0 text-md">{{ k.title }}</h4>
+                  <p class="m-0 text-sm text-600 overflow-hidden text-overflow-ellipsis white-space-nowrap" style="max-width: 300px;">{{ k.content }}</p>
+                </div>
+                <div class="flex gap-2">
+                  <Button icon="pi pi-pencil" text rounded severity="secondary" @click="openEditKnowledge(k)" />
+                  <Button icon="pi pi-trash" text rounded severity="danger" @click="deleteKnowledge(k.id)" />
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- QUIZZES E PERGUNTAS UNIFICADO -->
           <div class="surface-100 p-4 shadow-2 flex flex-column gap-3 mb-2" style="border-radius: 1rem;">
             <h3 class="m-0 text-xl text-center">Titulo Quiz</h3>
@@ -212,6 +236,25 @@
       </div>
     </div>
   </div>
+  <!-- TELA DE CRIAR/EDITAR CONHECIMENTO -->
+  <div v-if="isKnowledgeFormVisible" class="flex flex-column gap-4 w-full h-full pb-8 pt-3" style="background-color: #f9f9f9; padding-inline: 1rem; min-height: 100vh;">
+    <div class="w-full mx-auto bg-white p-4 border-round-xl shadow-1" style="max-width: 800px;">
+      <div class="flex justify-content-between align-items-center mb-4">
+        <h2 class="m-0">{{ newKnowledge.id ? 'Editar Conhecimento' : 'Novo Conhecimento' }}</h2>
+        <Button icon="pi pi-times" severity="secondary" text rounded @click="isKnowledgeFormVisible = false" />
+      </div>
+
+      <div class="flex flex-column gap-3">
+        <InputText v-model="newKnowledge.title" placeholder="Título (ex: Regras do Jogo)" class="w-full" />
+        <Textarea v-model="newKnowledge.content" placeholder="Conteúdo do conhecimento..." rows="6" class="w-full" />
+
+        <div class="flex gap-2 mt-4">
+          <Button label="Salvar" icon="pi pi-check" @click="saveKnowledge" class="flex-1" style="border-radius: 8px;" />
+          <Button label="Cancelar" icon="pi pi-times" severity="secondary" outlined @click="isKnowledgeFormVisible = false" class="flex-1" style="border-radius: 8px;" />
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- TELA DE GERAR COM IA -->
   <div v-if="isAIGeneratorVisible" class="flex flex-column gap-4 w-full h-full pb-8 pt-3" style="background-color: #f9f9f9; padding-inline: 1rem; min-height: 100vh;">
@@ -227,6 +270,8 @@
         
         <Select v-model="aiQuestionType" :options="questionTypes" optionLabel="label" optionValue="value" placeholder="Tipo de Pergunta" class="w-full" />
         
+        <Select v-model="aiSourceFlag" :options="aiSourceOptions" optionLabel="label" optionValue="value" placeholder="Fonte de Conhecimento" class="w-full" />
+
         <div class="flex flex-column gap-2">
           <InputText v-model="aiTopic" placeholder="Tema ou Texto base" class="w-full" />
           <Textarea v-model="aiInstructions" placeholder="Ex: As perguntas devem ser difíceis. Quero 4 opções de resposta para múltipla escolha e 30 segundos para responder." rows="2" class="w-full" />
@@ -329,6 +374,17 @@ const aiTopic = ref('');
 const aiInstructions = ref('4 opções de resposta para múltipla escolha e 30 segundos para responder.');
 const aiQuestionType = ref('MULTIPLE_CHOICE');
 const aiGeneratedQuestions = ref([]);
+
+const aiSourceFlag = ref('internet');
+const aiSourceOptions = ref([
+  { label: 'Internet', value: 'internet' },
+  { label: 'Apenas Base de Conhecimento', value: 'knowledge_base' },
+  { label: 'Híbrido', value: 'hybrid' }
+]);
+
+const knowledgeList = ref([]);
+const isKnowledgeFormVisible = ref(false);
+const newKnowledge = ref({ id: null, title: '', content: '' });
 
 const aiProviders = ref([
   { label: 'Google Gemini (Recomendado)', value: 'gemini' },
@@ -623,6 +679,7 @@ const logout = () => {
   automationToken.value = '';
   questions.value = [];
   quizzes.value = [];
+  knowledgeList.value = [];
 };
 
 const generateAutomationToken = async () => {
@@ -647,6 +704,65 @@ const copyAutomationToken = () => {
 const fetchData = async () => {
   fetchQuizzes();
   fetchQuestions();
+  fetchKnowledge();
+};
+
+const fetchKnowledge = async () => {
+  if (!token.value) return;
+  try {
+    const res = await axios.get(`${API_URL}/knowledge`, {
+      headers: { Authorization: `Bearer ${token.value}` }
+    });
+    knowledgeList.value = res.data;
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const openAddKnowledge = () => {
+  newKnowledge.value = { id: null, title: '', content: '' };
+  isKnowledgeFormVisible.value = true;
+};
+
+const openEditKnowledge = (k) => {
+  newKnowledge.value = { ...k };
+  isKnowledgeFormVisible.value = true;
+};
+
+const saveKnowledge = async () => {
+  if (!newKnowledge.value.title || !newKnowledge.value.content) {
+    return toast.add({ severity: 'error', summary: 'Erro', detail: 'Título e conteúdo são obrigatórios.', life: 3000 });
+  }
+  try {
+    if (newKnowledge.value.id) {
+      await axios.put(`${API_URL}/knowledge/${newKnowledge.value.id}`, newKnowledge.value, {
+        headers: { Authorization: `Bearer ${token.value}` }
+      });
+      toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Conhecimento atualizado!', life: 3000 });
+    } else {
+      await axios.post(`${API_URL}/knowledge`, newKnowledge.value, {
+        headers: { Authorization: `Bearer ${token.value}` }
+      });
+      toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Conhecimento criado!', life: 3000 });
+    }
+    isKnowledgeFormVisible.value = false;
+    fetchKnowledge();
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Erro', detail: 'Erro ao salvar conhecimento.', life: 3000 });
+  }
+};
+
+const deleteKnowledge = async (id) => {
+  if (!confirm('Deseja excluir este conhecimento?')) return;
+  try {
+    await axios.delete(`${API_URL}/knowledge/${id}`, {
+      headers: { Authorization: `Bearer ${token.value}` }
+    });
+    toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Conhecimento excluído!', life: 3000 });
+    fetchKnowledge();
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Erro', detail: 'Erro ao excluir.', life: 3000 });
+  }
 };
 
 const fetchQuizzes = async () => {
@@ -833,10 +949,29 @@ const generateQuestions = async () => {
 }`;
   }
 
+  let knowledgeContext = '';
+  if (aiSourceFlag.value === 'knowledge_base' || aiSourceFlag.value === 'hybrid') {
+    if (knowledgeList.value.length === 0) {
+      isGenerating.value = false;
+      return toast.add({ severity: 'error', summary: 'Erro', detail: 'Sua base de conhecimento está vazia. Adicione conhecimentos primeiro.', life: 3000 });
+    }
+    const texts = knowledgeList.value.map(k => `TÍTULO: ${k.title}\nCONTEÚDO:\n${k.content}`).join('\n\n---\n\n');
+    knowledgeContext = `\n\n=== BASE DE CONHECIMENTO FORNECIDA ===\n${texts}\n=====================================\n\n`;
+  }
+
+  let sourceInstruction = '';
+  if (aiSourceFlag.value === 'knowledge_base') {
+    sourceInstruction = 'ATENÇÃO: Você deve gerar as perguntas utilizando EXCLUSIVAMENTE as informações contidas na "BASE DE CONHECIMENTO FORNECIDA" abaixo. Não utilize seu conhecimento prévio sobre o assunto.';
+  } else if (aiSourceFlag.value === 'hybrid') {
+    sourceInstruction = 'ATENÇÃO: Você pode utilizar a "BASE DE CONHECIMENTO FORNECIDA" abaixo junto com o seu próprio conhecimento geral para gerar as perguntas.';
+  }
+
   const prompt = `Você é um gerador de perguntas para um quiz.
 Tema/Descrição do usuário: "${aiTopic.value}"
 Instruções adicionais: "${aiInstructions.value}"
 Tipo de Pergunta selecionado: ${aiQuestionType.value}
+${sourceInstruction}
+${knowledgeContext}
 
 Retorne APENAS um objeto JSON válido, com a propriedade "questions" contendo um array das perguntas geradas. NADA DE MARKDOWN, APENAS O JSON PURO.
 O formato de cada pergunta no array deve seguir rigorosamente este modelo:

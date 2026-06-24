@@ -79,6 +79,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api/auth', authRoutes);
 app.use('/api/questions', questionsRoutes);
 app.use('/api/quizzes', quizzesRoutes);
+app.use('/api/knowledge', require('./routes/knowledge'));
 app.use('/api/upload', require('./routes/upload'));
 
 // Game Logic
