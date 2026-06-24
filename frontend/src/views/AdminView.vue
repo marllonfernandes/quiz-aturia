@@ -1,6 +1,6 @@
 <template>
   <!-- DASHBOARD PRINCIPAL -->
-  <div v-if="!isFormVisible && !isAIGeneratorVisible" class="flex flex-column gap-4 w-full h-full pb-8 pt-3" style="background-color: #f9f9f9; padding-inline: 1rem; min-height: 100vh;">
+  <div v-if="!isFormVisible && !isAIGeneratorVisible && !isKnowledgeFormVisible" class="flex flex-column gap-4 w-full h-full pb-8 pt-3" style="background-color: #f9f9f9; padding-inline: 1rem; min-height: 100vh;">
     <div class="w-full mx-auto" style="max-width: 800px;">
       <div class="flex flex-column gap-4">
         <div class="flex justify-content-between align-items-center">
@@ -271,6 +271,17 @@
         <Select v-model="aiQuestionType" :options="questionTypes" optionLabel="label" optionValue="value" placeholder="Tipo de Pergunta" class="w-full" />
         
         <Select v-model="aiSourceFlag" :options="aiSourceOptions" optionLabel="label" optionValue="value" placeholder="Fonte de Conhecimento" class="w-full" />
+        
+        <MultiSelect 
+          v-if="aiSourceFlag === 'knowledge_base' || aiSourceFlag === 'hybrid'"
+          v-model="selectedKnowledgeBases" 
+          :options="knowledgeList" 
+          optionLabel="title" 
+          optionValue="id" 
+          placeholder="Selecione as bases de conhecimento..." 
+          :maxSelectedLabels="3" 
+          class="w-full" 
+        />
 
         <div class="flex flex-column gap-2">
           <InputText v-model="aiTopic" placeholder="Tema ou Texto base" class="w-full" />
@@ -309,7 +320,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import { setUser } from '../auth';
@@ -375,16 +386,22 @@ const aiInstructions = ref('4 opções de resposta para múltipla escolha e 30 s
 const aiQuestionType = ref('MULTIPLE_CHOICE');
 const aiGeneratedQuestions = ref([]);
 
+const knowledgeList = ref([]);
+const isKnowledgeFormVisible = ref(false);
+const newKnowledge = ref({ id: null, title: '', content: '' });
+
 const aiSourceFlag = ref('internet');
+const selectedKnowledgeBases = ref([]);
+
+watch(knowledgeList, (newList) => {
+  selectedKnowledgeBases.value = newList.map(k => k.id);
+});
+
 const aiSourceOptions = ref([
   { label: 'Internet', value: 'internet' },
   { label: 'Apenas Base de Conhecimento', value: 'knowledge_base' },
   { label: 'Híbrido', value: 'hybrid' }
 ]);
-
-const knowledgeList = ref([]);
-const isKnowledgeFormVisible = ref(false);
-const newKnowledge = ref({ id: null, title: '', content: '' });
 
 const aiProviders = ref([
   { label: 'Google Gemini (Recomendado)', value: 'gemini' },
@@ -951,11 +968,12 @@ const generateQuestions = async () => {
 
   let knowledgeContext = '';
   if (aiSourceFlag.value === 'knowledge_base' || aiSourceFlag.value === 'hybrid') {
-    if (knowledgeList.value.length === 0) {
+    if (selectedKnowledgeBases.value.length === 0) {
       isGenerating.value = false;
-      return toast.add({ severity: 'error', summary: 'Erro', detail: 'Sua base de conhecimento está vazia. Adicione conhecimentos primeiro.', life: 3000 });
+      return toast.add({ severity: 'error', summary: 'Erro', detail: 'Nenhuma base de conhecimento selecionada. Adicione ou selecione conhecimentos primeiro.', life: 3000 });
     }
-    const texts = knowledgeList.value.map(k => `TÍTULO: ${k.title}\nCONTEÚDO:\n${k.content}`).join('\n\n---\n\n');
+    const filteredList = knowledgeList.value.filter(k => selectedKnowledgeBases.value.includes(k.id));
+    const texts = filteredList.map(k => `TÍTULO: ${k.title}\nCONTEÚDO:\n${k.content}`).join('\n\n---\n\n');
     knowledgeContext = `\n\n=== BASE DE CONHECIMENTO FORNECIDA ===\n${texts}\n=====================================\n\n`;
   }
 
