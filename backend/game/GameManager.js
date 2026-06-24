@@ -162,6 +162,8 @@ class GameManager {
         options: JSON.parse(question.options),
         timeLimit: question.timeLimit,
         audioUrl: question.audioUrl,
+        theme: question.theme,
+        mediaUrl: question.mediaUrl,
         currentQuestionIndex: room.currentQuestionIndex,
         totalQuestions: room.questions.length
       };
@@ -172,6 +174,7 @@ class GameManager {
         type: question.type,
         options: clientQuestion.options,
         audioUrl: question.audioUrl,
+        theme: question.theme,
         currentQuestionIndex: room.currentQuestionIndex,
         totalQuestions: room.questions.length
       });

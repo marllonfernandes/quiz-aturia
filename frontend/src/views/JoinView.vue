@@ -8,7 +8,7 @@
         <InputText id="pinInput" v-model="pin" placeholder="000000" class="text-center text-4xl font-bold p-3 border-2 border-gray-300" style="letter-spacing: 6px; border-radius: 1rem;" maxlength="6" inputmode="numeric" />
       </div>
       
-      <Button label="Entrar" size="large" @click="joinGame" class="w-full font-bold p-3 text-xl border-none mt-3" style="border-radius: 1rem; background-color: #333333; color: white;" />
+      <Button label="Entrar" icon="pi pi-rocket" size="large" @click="joinGame" class="w-full font-bold p-3 text-xl border-none mt-3" style="border-radius: 1rem; background-color: #333333; color: white;" />
     </div>
   </div>
 </template>

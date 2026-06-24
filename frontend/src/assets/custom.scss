@@ -396,6 +396,10 @@ img {
 	&--active,
 	&:hover {
 		color: var(--c-purple-500);
+		
+		.menu-bar-item-text {
+			font-weight: bold;
+		}
 	}
 }
 

@@ -1,6 +1,6 @@
 <template>
   <!-- DASHBOARD PRINCIPAL -->
-  <div v-if="!isFormVisible && !isAIGeneratorVisible" class="flex flex-column gap-4 w-full h-full pb-8 pt-3" style="background-color: #f9f9f9; padding-inline: 1rem; min-height: 100vh;">
+  <div v-if="!isFormVisible && !isAIGeneratorVisible && !isKnowledgeFormVisible" class="flex flex-column gap-4 w-full h-full pb-8 pt-3" style="background-color: #f9f9f9; padding-inline: 1rem; min-height: 100vh;">
     <div class="w-full mx-auto" style="max-width: 800px;">
       <div class="flex flex-column gap-4">
         <div class="flex justify-content-between align-items-center">
@@ -36,6 +36,30 @@
             </div>
           </div>
 
+          <!-- BASE DE CONHECIMENTO -->
+          <div class="surface-100 p-4 shadow-2 flex flex-column gap-3 mb-2" style="border-radius: 1rem;">
+            <div class="flex justify-content-between align-items-center">
+              <h3 class="m-0 text-xl"><i class="pi pi-book mr-2"></i>Base de Conhecimento Pessoal</h3>
+              <Button icon="pi pi-plus" label="Novo Conhecimento" size="small" @click="openAddKnowledge" />
+            </div>
+            <p class="text-sm text-600 m-0">
+              Armazene textos e informações que a IA poderá usar como contexto exclusivo ao gerar perguntas.
+            </p>
+            <div v-if="knowledgeList.length === 0" class="text-center text-500 py-2 text-sm">Nenhum conhecimento cadastrado.</div>
+            <div v-else class="flex flex-column gap-2 mt-2">
+              <div v-for="k in knowledgeList" :key="k.id" class="flex justify-content-between align-items-center bg-white p-3 border-round shadow-1">
+                <div>
+                  <h4 class="m-0 text-md">{{ k.title }}</h4>
+                  <p class="m-0 text-sm text-600 overflow-hidden text-overflow-ellipsis white-space-nowrap" style="max-width: 300px;">{{ k.content }}</p>
+                </div>
+                <div class="flex gap-2">
+                  <Button icon="pi pi-pencil" text rounded severity="secondary" @click="openEditKnowledge(k)" />
+                  <Button icon="pi pi-trash" text rounded severity="danger" @click="deleteKnowledge(k.id)" />
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- QUIZZES E PERGUNTAS UNIFICADO -->
           <div class="surface-100 p-4 shadow-2 flex flex-column gap-3 mb-2" style="border-radius: 1rem;">
             <h3 class="m-0 text-xl text-center">Titulo Quiz</h3>
@@ -60,6 +84,12 @@
               </div>
               
               <div v-show="isQuizExpanded(group.id)">
+                <!-- Botões de ação no topo -->
+                <div class="flex gap-2 mb-3 pb-3 border-bottom-1 surface-border">
+                  <Button label="Adicionar Pergunta" icon="pi pi-plus" outlined class="flex-1" style="border-radius: 1rem;" @click="openAddQuestion(group.id)" />
+                  <Button label="Gerar com IA" icon="pi pi-sparkles" severity="help" outlined class="flex-1" style="border-radius: 1rem;" @click="openAIGenerator(group.id)" />
+                </div>
+
                 <div v-if="group.questions.length === 0" class="text-500 text-sm mb-3">Nenhuma pergunta neste quiz.</div>
                 
                 <div class="flex flex-column gap-3 mb-3">
@@ -92,11 +122,7 @@
                   </div>
                 </div>
 
-                <!-- Formulário para adicionar nova pergunta neste quiz -->
-                <div class="mt-2 border-top-1 surface-border pt-3 flex gap-2">
-                  <Button label="Adicionar Pergunta" icon="pi pi-plus" outlined class="flex-1" style="border-radius: 1rem;" @click="openAddQuestion(group.id)" />
-                  <Button label="Gerar com IA" icon="pi pi-sparkles" severity="help" outlined class="flex-1" style="border-radius: 1rem;" @click="openAIGenerator(group.id)" />
-                </div>
+
               </div>
             </div>
           </div>
@@ -144,9 +170,89 @@
           <Select v-model="newQ.audioUrl" :options="audioOptions" optionLabel="label" optionValue="value" placeholder="Áudio de Fundo" class="w-full" />
         </div>
 
+        <div class="flex flex-column gap-2 mt-2">
+          <label class="font-bold text-700">Tema de Fundo</label>
+          <div class="flex flex-wrap gap-3">
+            <div 
+              v-for="t in themeOptions" :key="t.label"
+              @click="newQ.theme = t.value"
+              class="cursor-pointer border-round-xl p-2 transition-all transition-duration-200 hover:shadow-3 flex flex-column align-items-center gap-2"
+              :class="newQ.theme === t.value ? 'border-primary border-2 shadow-2' : 'border-transparent border-2 surface-100 shadow-1'"
+              style="width: 100px;"
+            >
+              <div 
+                class="w-full h-4rem border-round-md bg-cover bg-center" 
+                :style="{ background: t.value ? `url('${t.value}')` : t.color }"
+              ></div>
+              <span class="text-xs text-center font-medium">{{ t.label }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-column gap-2 mt-2">
+          <label class="font-bold text-700">Mídia da Capa (Imagem/GIF)</label>
+          
+          <!-- Seleção rápida de mídia pré-definida -->
+          <div class="flex flex-wrap gap-2 mb-2">
+            <div 
+              v-for="(img, idx) in defaultMediaOptions" :key="idx"
+              @click="newQ.mediaUrl = img.url"
+              class="cursor-pointer border-round-xl overflow-hidden transition-all transition-duration-200 hover:shadow-3"
+              :class="newQ.mediaUrl === img.url ? 'border-primary border-3 shadow-2' : 'border-transparent border-3 surface-100 shadow-1'"
+              style="width: 80px; height: 60px;"
+            >
+              <img :src="img.url" :alt="img.label" class="w-full h-full" style="object-fit: cover;" />
+            </div>
+          </div>
+
+          <div class="flex gap-2 align-items-center">
+            <InputText v-model="newQ.mediaUrl" placeholder="Cole a URL ou faça upload" class="flex-1" />
+            
+            <div class="relative">
+              <input 
+                type="file" 
+                accept="image/*" 
+                @change="uploadMedia" 
+                class="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer" 
+                style="z-index: 2;"
+                :disabled="isUploading"
+              />
+              <Button 
+                :label="isUploading ? 'Enviando...' : 'Fazer Upload'" 
+                :icon="isUploading ? 'pi pi-spin pi-spinner' : 'pi pi-upload'" 
+                severity="secondary" 
+                outlined 
+                style="border-radius: 8px;"
+              />
+            </div>
+          </div>
+          <div v-if="newQ.mediaUrl" class="mt-2 border-round-xl overflow-hidden bg-gray-100 flex justify-content-center align-items-center shadow-1" style="height: 150px;">
+            <img :src="newQ.mediaUrl" alt="Media Preview" style="max-height: 100%; max-width: 100%; object-fit: contain;" />
+          </div>
+        </div>
+
         <div class="flex gap-2 mt-4">
           <Button label="Salvar" icon="pi pi-check" @click="createQuestion" class="flex-1" style="border-radius: 8px;" />
           <Button label="Cancelar" icon="pi pi-times" severity="secondary" outlined @click="isFormVisible = false" class="flex-1" style="border-radius: 8px;" />
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- TELA DE CRIAR/EDITAR CONHECIMENTO -->
+  <div v-if="isKnowledgeFormVisible" class="flex flex-column gap-4 w-full h-full pb-8 pt-3" style="background-color: #f9f9f9; padding-inline: 1rem; min-height: 100vh;">
+    <div class="w-full mx-auto bg-white p-4 border-round-xl shadow-1" style="max-width: 800px;">
+      <div class="flex justify-content-between align-items-center mb-4">
+        <h2 class="m-0">{{ newKnowledge.id ? 'Editar Conhecimento' : 'Novo Conhecimento' }}</h2>
+        <Button icon="pi pi-times" severity="secondary" text rounded @click="isKnowledgeFormVisible = false" />
+      </div>
+
+      <div class="flex flex-column gap-3">
+        <InputText v-model="newKnowledge.title" placeholder="Título (ex: Regras do Jogo)" class="w-full" />
+        <Textarea v-model="newKnowledge.content" placeholder="Conteúdo do conhecimento..." rows="6" class="w-full" />
+
+        <div class="flex gap-2 mt-4">
+          <Button label="Salvar" icon="pi pi-check" @click="saveKnowledge" class="flex-1" style="border-radius: 8px;" />
+          <Button label="Cancelar" icon="pi pi-times" severity="secondary" outlined @click="isKnowledgeFormVisible = false" class="flex-1" style="border-radius: 8px;" />
         </div>
       </div>
     </div>
@@ -166,6 +272,19 @@
         
         <Select v-model="aiQuestionType" :options="questionTypes" optionLabel="label" optionValue="value" placeholder="Tipo de Pergunta" class="w-full" />
         
+        <Select v-model="aiSourceFlag" :options="aiSourceOptions" optionLabel="label" optionValue="value" placeholder="Fonte de Conhecimento" class="w-full" />
+        
+        <MultiSelect 
+          v-if="aiSourceFlag === 'knowledge_base' || aiSourceFlag === 'hybrid'"
+          v-model="selectedKnowledgeBases" 
+          :options="knowledgeList" 
+          optionLabel="title" 
+          optionValue="id" 
+          placeholder="Selecione as bases de conhecimento..." 
+          :maxSelectedLabels="3" 
+          class="w-full" 
+        />
+
         <div class="flex flex-column gap-2">
           <InputText v-model="aiTopic" placeholder="Tema ou Texto base" class="w-full" />
           <Textarea v-model="aiInstructions" placeholder="Ex: As perguntas devem ser difíceis. Quero 4 opções de resposta para múltipla escolha e 30 segundos para responder." rows="2" class="w-full" />
@@ -203,7 +322,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import { setUser } from '../auth';
@@ -218,6 +337,7 @@ import Tag from 'primevue/tag';
 import InputNumber from 'primevue/inputnumber';
 import Dialog from 'primevue/dialog';
 import Textarea from 'primevue/textarea';
+import MultiSelect from 'primevue/multiselect';
 
 const router = useRouter();
 const toast = useToast();
@@ -269,6 +389,23 @@ const aiInstructions = ref('4 opções de resposta para múltipla escolha e 30 s
 const aiQuestionType = ref('MULTIPLE_CHOICE');
 const aiGeneratedQuestions = ref([]);
 
+const knowledgeList = ref([]);
+const isKnowledgeFormVisible = ref(false);
+const newKnowledge = ref({ id: null, title: '', content: '' });
+
+const aiSourceFlag = ref('internet');
+const selectedKnowledgeBases = ref([]);
+
+watch(knowledgeList, (newList) => {
+  selectedKnowledgeBases.value = newList.map(k => k.id);
+}, { immediate: true });
+
+const aiSourceOptions = ref([
+  { label: 'Internet', value: 'internet' },
+  { label: 'Apenas Base de Conhecimento', value: 'knowledge_base' },
+  { label: 'Híbrido', value: 'hybrid' }
+]);
+
 const aiProviders = ref([
   { label: 'Google Gemini (Recomendado)', value: 'gemini' },
   { label: 'OpenAI (ChatGPT)', value: 'openai' }
@@ -314,6 +451,8 @@ const openAddQuestion = (quizId) => {
     shortAnswerText: '',
     timeLimit: 20,
     audioUrl: '',
+    theme: '',
+    mediaUrl: '',
     quizId: quizId === 'unassigned' ? null : quizId
   };
   isFormVisible.value = true;
@@ -330,6 +469,8 @@ const openEditQuestion = (q, quizId) => {
     shortAnswerText: q.type === 'SHORT_ANSWER' ? safeParseShortAnswer(q.correctAnswer) : '',
     timeLimit: q.timeLimit || 20,
     audioUrl: q.audioUrl || '',
+    theme: q.theme || '',
+    mediaUrl: q.mediaUrl || '',
     quizId: quizId === 'unassigned' ? null : quizId
   };
   isFormVisible.value = true;
@@ -346,6 +487,8 @@ const cloneQuestion = (q, quizId) => {
     shortAnswerText: q.type === 'SHORT_ANSWER' ? safeParseShortAnswer(q.correctAnswer) : '',
     timeLimit: q.timeLimit || 20,
     audioUrl: q.audioUrl || '',
+    theme: q.theme || '',
+    mediaUrl: q.mediaUrl || '',
     quizId: quizId === 'unassigned' ? null : quizId
   };
   isFormVisible.value = true;
@@ -401,8 +544,55 @@ const newQ = ref({
   shortAnswerText: '',
   timeLimit: 20,
   audioUrl: '',
+  theme: '',
+  mediaUrl: '',
   quizId: null
 });
+
+const isUploading = ref(false);
+
+const uploadMedia = async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  isUploading.value = true;
+  try {
+    const res = await axios.post(`${API_URL}/upload`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${token.value}`
+      }
+    });
+    newQ.value.mediaUrl = res.data.url;
+    toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Mídia enviada!', life: 3000 });
+  } catch (e) {
+    console.error(e);
+    toast.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao enviar mídia', life: 3000 });
+  } finally {
+    isUploading.value = false;
+  }
+};
+
+const themeOptions = ref([
+  { label: 'Padrão', value: '', color: '#f3f4f6' },
+  { label: 'Espaço', value: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&q=80&w=1000', color: '#1a1a2e' },
+  { label: 'Abstrato Azul', value: 'https://images.unsplash.com/photo-1557682250-33bd709cbe85?auto=format&fit=crop&q=80&w=1000', color: '#005bea' },
+  { label: 'Gradiente Quente', value: 'https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&q=80&w=1000', color: '#ff0844' },
+  { label: 'Geométrico', value: 'https://images.unsplash.com/photo-1505909182942-e2f09aee3e89?auto=format&fit=crop&q=80&w=1000', color: '#f5576c' },
+  { label: 'Cores Vibrantes', value: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=1000', color: '#4facfe' }
+]);
+
+const defaultMediaOptions = ref([
+  { label: 'Ciência', url: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&q=80&w=300' },
+  { label: 'Tecnologia', url: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=300' },
+  { label: 'Matemática', url: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&q=80&w=300' },
+  { label: 'Geografia', url: 'https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=300' },
+  { label: 'História', url: 'https://images.unsplash.com/photo-1461360370896-922624d12aa1?auto=format&fit=crop&q=80&w=300' },
+  { label: 'Arte', url: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&q=80&w=300' }
+]);
 
 const questionTypes = ref([
   { label: 'Quiz (Múltipla Escolha)', value: 'MULTIPLE_CHOICE' },
@@ -509,6 +699,7 @@ const logout = () => {
   automationToken.value = '';
   questions.value = [];
   quizzes.value = [];
+  knowledgeList.value = [];
 };
 
 const generateAutomationToken = async () => {
@@ -533,6 +724,65 @@ const copyAutomationToken = () => {
 const fetchData = async () => {
   fetchQuizzes();
   fetchQuestions();
+  fetchKnowledge();
+};
+
+const fetchKnowledge = async () => {
+  if (!token.value) return;
+  try {
+    const res = await axios.get(`${API_URL}/knowledge`, {
+      headers: { Authorization: `Bearer ${token.value}` }
+    });
+    knowledgeList.value = res.data;
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const openAddKnowledge = () => {
+  newKnowledge.value = { id: null, title: '', content: '' };
+  isKnowledgeFormVisible.value = true;
+};
+
+const openEditKnowledge = (k) => {
+  newKnowledge.value = { ...k };
+  isKnowledgeFormVisible.value = true;
+};
+
+const saveKnowledge = async () => {
+  if (!newKnowledge.value.title || !newKnowledge.value.content) {
+    return toast.add({ severity: 'error', summary: 'Erro', detail: 'Título e conteúdo são obrigatórios.', life: 3000 });
+  }
+  try {
+    if (newKnowledge.value.id) {
+      await axios.put(`${API_URL}/knowledge/${newKnowledge.value.id}`, newKnowledge.value, {
+        headers: { Authorization: `Bearer ${token.value}` }
+      });
+      toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Conhecimento atualizado!', life: 3000 });
+    } else {
+      await axios.post(`${API_URL}/knowledge`, newKnowledge.value, {
+        headers: { Authorization: `Bearer ${token.value}` }
+      });
+      toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Conhecimento criado!', life: 3000 });
+    }
+    isKnowledgeFormVisible.value = false;
+    fetchKnowledge();
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Erro', detail: 'Erro ao salvar conhecimento.', life: 3000 });
+  }
+};
+
+const deleteKnowledge = async (id) => {
+  if (!confirm('Deseja excluir este conhecimento?')) return;
+  try {
+    await axios.delete(`${API_URL}/knowledge/${id}`, {
+      headers: { Authorization: `Bearer ${token.value}` }
+    });
+    toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Conhecimento excluído!', life: 3000 });
+    fetchKnowledge();
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Erro', detail: 'Erro ao excluir.', life: 3000 });
+  }
 };
 
 const fetchQuizzes = async () => {
@@ -635,6 +885,8 @@ const createQuestion = async () => {
       correctAnswer: finalCorrectAnswer,
       timeLimit: newQ.value.timeLimit || 20,
       audioUrl: newQ.value.audioUrl || null,
+      theme: newQ.value.theme || null,
+      mediaUrl: newQ.value.mediaUrl || null,
       points: 1000,
       quizId: newQ.value.quizId
     };
@@ -657,6 +909,8 @@ const createQuestion = async () => {
     newQ.value.shortAnswerText = '';
     newQ.value.timeLimit = 20;
     newQ.value.audioUrl = '';
+    newQ.value.theme = '';
+    newQ.value.mediaUrl = '';
     
     activeQuizId.value = null;
     editingQuestionId.value = null;
@@ -715,10 +969,30 @@ const generateQuestions = async () => {
 }`;
   }
 
+  let knowledgeContext = '';
+  if (aiSourceFlag.value === 'knowledge_base' || aiSourceFlag.value === 'hybrid') {
+    if (selectedKnowledgeBases.value.length === 0) {
+      isGenerating.value = false;
+      return toast.add({ severity: 'error', summary: 'Erro', detail: 'Nenhuma base de conhecimento selecionada. Adicione ou selecione conhecimentos primeiro.', life: 3000 });
+    }
+    const filteredList = knowledgeList.value.filter(k => selectedKnowledgeBases.value.includes(k.id));
+    const texts = filteredList.map(k => `TÍTULO: ${k.title}\nCONTEÚDO:\n${k.content}`).join('\n\n---\n\n');
+    knowledgeContext = `\n\n=== BASE DE CONHECIMENTO FORNECIDA ===\n${texts}\n=====================================\n\n`;
+  }
+
+  let sourceInstruction = '';
+  if (aiSourceFlag.value === 'knowledge_base') {
+    sourceInstruction = 'ATENÇÃO: Você deve gerar as perguntas utilizando EXCLUSIVAMENTE as informações contidas na "BASE DE CONHECIMENTO FORNECIDA" abaixo. Não utilize seu conhecimento prévio sobre o assunto.';
+  } else if (aiSourceFlag.value === 'hybrid') {
+    sourceInstruction = 'ATENÇÃO: Você pode utilizar a "BASE DE CONHECIMENTO FORNECIDA" abaixo junto com o seu próprio conhecimento geral para gerar as perguntas.';
+  }
+
   const prompt = `Você é um gerador de perguntas para um quiz.
 Tema/Descrição do usuário: "${aiTopic.value}"
 Instruções adicionais: "${aiInstructions.value}"
 Tipo de Pergunta selecionado: ${aiQuestionType.value}
+${sourceInstruction}
+${knowledgeContext}
 
 Retorne APENAS um objeto JSON válido, com a propriedade "questions" contendo um array das perguntas geradas. NADA DE MARKDOWN, APENAS O JSON PURO.
 O formato de cada pergunta no array deve seguir rigorosamente este modelo:
@@ -792,6 +1066,7 @@ const saveGeneratedQuestions = async () => {
         correctAnswer: finalCorrectAnswer,
         timeLimit: q.timeLimit || 20,
         points: 1000,
+        backgroundAudio: '/sounds/fun.mp3',
         quizId: activeQuizId.value
       };
       
