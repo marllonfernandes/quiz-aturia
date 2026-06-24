@@ -6,7 +6,7 @@ import PrimeVue from 'primevue/config'
 import Aura from '@primeuix/themes/aura'
 import 'primeicons/primeicons.css'
 import 'primeflex/primeflex.css'
-import './assets/main.css'
+import './assets/custom.scss'
 
 import ToastService from 'primevue/toastservice'
 
