@@ -42,56 +42,63 @@
       </div>
 
       <!-- STATE: PLAYING -->
-      <div v-if="state === 'PLAYING'">
-        <div class="text-500 mb-3 font-bold text-xl">Pergunta {{ currentQuestionIndex + 1 }} de {{ totalQuestions }}
-        </div>
+      <div v-if="state === 'PLAYING'" class="w-full">
+        <div class="text-500 mb-3 font-bold text-xl">Pergunta {{ currentQuestionIndex + 1 }} de {{ totalQuestions }}</div>
         
-        <!-- Media (Cover Image/Gif) -->
-        <div v-if="currentQuestion?.mediaUrl" class="w-full flex justify-content-center mb-4">
-          <img :src="currentQuestion.mediaUrl" alt="Media da Pergunta" class="border-round shadow-4" style="max-height: 250px; max-width: 100%; object-fit: contain;" />
-        </div>
-
         <h1 class="text-3xl md:text-4xl mb-5">{{ currentQuestion.text }}</h1>
 
-        <div v-if="currentQuestion.type === 'MULTIPLE_CHOICE'" class="flex flex-column gap-3 w-full m-0 max-w-full">
-          <div v-for="(opt, idx) in currentQuestion.options" :key="idx"
-            :style="{ backgroundColor: getOptionStyle(idx).bg, color: getOptionStyle(idx).text }"
-            class="w-full flex align-items-center justify-content-between p-3 font-bold shadow-1"
-            style="border-radius: 2rem;">
-            <div class="flex align-items-center gap-3 text-left">
-               <i :class="getOptionStyle(idx).icon" class="text-2xl"></i>
-               <span style="font-size: 1.25rem; line-height: 1.2; word-break: break-word;">{{ opt }}</span>
-            </div>
-            <div class="flex align-items-center justify-content-center border-circle flex-shrink-0" style="background-color: rgba(0,0,0,0.05); width: 40px; height: 40px;">
-              <i class="pi pi-chevron-right text-lg"></i>
-            </div>
+        <div :class="['flex w-full', currentQuestion?.mediaUrl ? 'flex-column lg:flex-row gap-5' : 'flex-column']">
+          
+          <!-- Media (Cover Image/Gif) -->
+          <div v-if="currentQuestion?.mediaUrl" class="flex-1 flex justify-content-center align-items-center">
+            <img :src="currentQuestion.mediaUrl" alt="Media da Pergunta" class="border-round shadow-4 w-full" style="max-height: 400px; object-fit: contain;" />
           </div>
-        </div>
 
-        <div v-else-if="currentQuestion.type === 'TRUE_FALSE'" class="flex flex-column gap-3 w-full m-0 max-w-full">
-          <div
-            :style="{ backgroundColor: getOptionStyle(0).bg, color: getOptionStyle(0).text }"
-            class="w-full flex align-items-center justify-content-between p-3 font-bold shadow-1"
-            style="border-radius: 2rem;">
-            <div class="flex align-items-center gap-3">
-               <i class="pi pi-check-circle text-2xl"></i>
-               <span style="font-size: 1.5rem;">Verdadeiro</span>
-            </div>
-          </div>
-          <div
-            :style="{ backgroundColor: getOptionStyle(3).bg, color: getOptionStyle(3).text }"
-            class="w-full flex align-items-center justify-content-between p-3 font-bold shadow-1"
-            style="border-radius: 2rem;">
-            <div class="flex align-items-center gap-3">
-               <i class="pi pi-times-circle text-2xl"></i>
-               <span style="font-size: 1.5rem;">Falso</span>
-            </div>
-          </div>
-        </div>
+          <!-- Options Container -->
+          <div :class="[currentQuestion?.mediaUrl ? 'flex-1 flex flex-column justify-content-center' : 'w-full']">
 
-        <div v-else-if="currentQuestion.type === 'SHORT_ANSWER'" class="flex justify-content-center">
-          <div class="surface-100 border-round p-5 shadow-2 text-2xl max-w-full">
-            Os jogadores devem digitar a resposta correta.
+            <div v-if="currentQuestion.type === 'MULTIPLE_CHOICE'" class="flex flex-column gap-3 w-full m-0 max-w-full">
+              <div v-for="(opt, idx) in currentQuestion.options" :key="idx"
+                :style="{ backgroundColor: getOptionStyle(idx).bg, color: getOptionStyle(idx).text }"
+                class="w-full flex align-items-center justify-content-between p-3 font-bold shadow-1"
+                style="border-radius: 2rem;">
+                <div class="flex align-items-center gap-3 text-left">
+                   <i :class="getOptionStyle(idx).icon" class="text-2xl"></i>
+                   <span style="font-size: 1.25rem; line-height: 1.2; word-break: break-word;">{{ opt }}</span>
+                </div>
+                <div class="flex align-items-center justify-content-center border-circle flex-shrink-0" style="background-color: rgba(0,0,0,0.05); width: 40px; height: 40px;">
+                  <i class="pi pi-chevron-right text-lg"></i>
+                </div>
+              </div>
+            </div>
+
+            <div v-else-if="currentQuestion.type === 'TRUE_FALSE'" class="flex flex-column gap-3 w-full m-0 max-w-full">
+              <div
+                :style="{ backgroundColor: getOptionStyle(0).bg, color: getOptionStyle(0).text }"
+                class="w-full flex align-items-center justify-content-between p-3 font-bold shadow-1"
+                style="border-radius: 2rem;">
+                <div class="flex align-items-center gap-3">
+                   <i class="pi pi-check-circle text-2xl"></i>
+                   <span style="font-size: 1.5rem;">Verdadeiro</span>
+                </div>
+              </div>
+              <div
+                :style="{ backgroundColor: getOptionStyle(3).bg, color: getOptionStyle(3).text }"
+                class="w-full flex align-items-center justify-content-between p-3 font-bold shadow-1"
+                style="border-radius: 2rem;">
+                <div class="flex align-items-center gap-3">
+                   <i class="pi pi-times-circle text-2xl"></i>
+                   <span style="font-size: 1.5rem;">Falso</span>
+                </div>
+              </div>
+            </div>
+
+            <div v-else-if="currentQuestion.type === 'SHORT_ANSWER'" class="flex justify-content-center">
+              <div class="surface-100 border-round p-5 shadow-2 text-2xl max-w-full text-center">
+                Os jogadores devem digitar a resposta correta.
+              </div>
+            </div>
+
           </div>
         </div>
 

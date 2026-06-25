@@ -37,6 +37,11 @@ class GameManager {
         }
 
         const questions = await prisma.question.findMany({ where: whereClause, orderBy: { createdAt: 'asc' } });
+        
+        if (!questions || questions.length === 0) {
+          return socket.emit('error', 'Este quiz não possui nenhuma pergunta. Adicione perguntas antes de iniciar a sala.');
+        }
+
         this.rooms[pin] = {
           hostId: socket.id,
           players: [],
