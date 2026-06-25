@@ -197,7 +197,7 @@
         <div class="flex gap-3 align-items-center mt-2">
           <Select v-model="newQ.timeLimit" :options="timeLimitOptions" optionLabel="label" optionValue="value" placeholder="Tempo Limite" class="w-full" />
           <div class="w-full flex gap-2">
-            <Select v-model="newQ.audioUrl" :options="audioOptions" optionLabel="label" optionValue="value" placeholder="Áudio de Fundo" class="flex-1" />
+            <Select v-model="newQ.audioUrl" :options="audioOptions" optionLabel="label" optionValue="value" placeholder="Áudio de Fundo" class="flex-1" appendTo="body" />
             <Button v-if="newQ.audioUrl && editingQuestionId" icon="pi pi-copy" severity="info" outlined @click="applyFieldToQuiz('audioUrl', newQ.audioUrl, activeQuizId)" title="Aplicar este áudio em todas perguntas deste quiz" />
           </div>
         </div>
@@ -328,6 +328,9 @@
           <Textarea v-model="aiInstructions" placeholder="Ex: As perguntas devem ser difíceis. Quero 4 opções de resposta para múltipla escolha e 30 segundos para responder." rows="2" class="w-full" />
         </div>
 
+        <Select v-model="aiAudioUrl" :options="audioOptions" optionLabel="label" optionValue="value" placeholder="Áudio de Fundo Padrão" class="w-full" appendTo="body" />
+
+
         <div class="flex gap-2 mt-4">
           <Button label="Gerar Perguntas" icon="pi pi-sparkles" severity="help" @click="generateQuestions" :loading="isGenerating" class="flex-1" style="border-radius: 8px;" />
           <Button label="Cancelar" icon="pi pi-times" severity="secondary" outlined @click="isAIGeneratorVisible = false" class="flex-1" :disabled="isGenerating" style="border-radius: 8px;" />
@@ -425,6 +428,7 @@ const aiApiKey = ref(localStorage.getItem('ai_api_key') || '');
 const aiTopic = ref('');
 const aiInstructions = ref('4 opções de resposta para múltipla escolha e 30 segundos para responder.');
 const aiQuestionType = ref('MULTIPLE_CHOICE');
+const aiAudioUrl = ref('');
 const aiGeneratedQuestions = ref([]);
 
 const knowledgeList = ref([]);
@@ -587,13 +591,15 @@ const isAuthorizedUserForDefaultKey = () => {
 
 const updateDefaultInstructions = () => {
   if (aiQuestionType.value === 'MULTIPLE_CHOICE') {
-    aiInstructions.value = '4 opções de resposta para múltipla escolha e 30 segundos para responder. \n Na seleção da opção correta, alterne a posição para dificultar. \n Sempre escolha o som de fundo "divertida"';
+    aiInstructions.value = '4 opções de resposta para múltipla escolha e 30 segundos para responder. \n Na seleção da opção correta, alterne a posição para dificultar.';
   } else if (aiQuestionType.value === 'TRUE_FALSE') {
-    aiInstructions.value = 'Verdadeiro ou Falso, As opções serão "Verdadeiro" e "Falso". Tempo de 20 segundos. \n Na seleção da opção correta, alterne a posição para dificultar. \n Sempre escolha o som de fundo "divertida"';
+    aiInstructions.value = 'Verdadeiro ou Falso, As opções serão "Verdadeiro" e "Falso". Tempo de 20 segundos. \n Na seleção da opção correta, alterne a posição para dificultar.';
   } else if (aiQuestionType.value === 'SHORT_ANSWER') {
-    aiInstructions.value = 'A resposta deve ser curta e objetiva. Tempo de 30 segundos. \n Na seleção da opção correta, alterne a posição para dificultar. \n Sempre escolha o som de fundo "divertida"';
+    aiInstructions.value = 'A resposta deve ser curta e objetiva. Tempo de 30 segundos. \n Na seleção da opção correta, alterne a posição para dificultar.';
   }
 };
+
+watch(aiQuestionType, updateDefaultInstructions);
 
 const openAIGenerator = (quizId) => {
   activeQuizId.value = quizId === 'unassigned' ? null : quizId;
@@ -1072,9 +1078,9 @@ const generateQuestions = async () => {
 
   let sourceInstruction = '';
   if (aiSourceFlag.value === 'knowledge_base') {
-    sourceInstruction = 'ATENÇÃO: Você deve gerar as perguntas utilizando EXCLUSIVAMENTE as informações contidas na "BASE DE CONHECIMENTO FORNECIDA" abaixo. Não utilize seu conhecimento prévio sobre o assunto.';
+    sourceInstruction = 'ATENÇÃO: Você deve gerar as perguntas utilizando EXCLUSIVAMENTE as informações contidas na "BASE DE CONHECIMENTO FORNECIDA" abaixo. Não utilize seu conhecimento prévio sobre o assunto. IMPORTANTE: O texto de cada pergunta deve ser claro, objetivo e fazer sentido por si só. Evite usar pronomes vagos (como "ele", "ela", "isso") e sempre especifique nomes, locais ou contextos para que a pergunta seja perfeitamente compreendida fora do contexto do texto.';
   } else if (aiSourceFlag.value === 'hybrid') {
-    sourceInstruction = 'ATENÇÃO: Você pode utilizar a "BASE DE CONHECIMENTO FORNECIDA" abaixo junto com o seu próprio conhecimento geral para gerar as perguntas.';
+    sourceInstruction = 'ATENÇÃO: Você pode utilizar a "BASE DE CONHECIMENTO FORNECIDA" abaixo junto com o seu próprio conhecimento geral para gerar as perguntas. IMPORTANTE: O texto de cada pergunta deve ser claro, objetivo e fazer sentido por si só. Evite usar pronomes vagos (como "ele", "ela", "isso") e sempre especifique nomes, locais ou contextos para que a pergunta seja perfeitamente compreendida fora do contexto do texto.';
   }
 
   const prompt = `Você é um gerador de perguntas para um quiz.
@@ -1156,7 +1162,7 @@ const saveGeneratedQuestions = async () => {
         correctAnswer: finalCorrectAnswer,
         timeLimit: q.timeLimit || 20,
         points: 1000,
-        backgroundAudio: '/sounds/fun.mp3',
+        backgroundAudio: aiAudioUrl.value || '/sounds/fun.mp3',
         quizId: activeQuizId.value
       };
       
