@@ -589,17 +589,43 @@ const isAuthorizedUserForDefaultKey = () => {
   return authorizedEmails.includes(decoded.email.toLowerCase());
 };
 
+let lastDefaultInstruction = '';
+
 const updateDefaultInstructions = () => {
+  let baseInstruction = '';
   if (aiQuestionType.value === 'MULTIPLE_CHOICE') {
-    aiInstructions.value = '4 opções de resposta para múltipla escolha e 30 segundos para responder. \n Na seleção da opção correta, alterne a posição para dificultar.';
+    baseInstruction = '4 opções de resposta para múltipla escolha e 30 segundos para responder. \n Na seleção da opção correta, alterne a posição para dificultar.';
   } else if (aiQuestionType.value === 'TRUE_FALSE') {
-    aiInstructions.value = 'Verdadeiro ou Falso, As opções serão "Verdadeiro" e "Falso". Tempo de 20 segundos. \n Na seleção da opção correta, alterne a posição para dificultar.';
+    baseInstruction = 'Verdadeiro ou Falso, As opções serão "Verdadeiro" e "Falso". Tempo de 20 segundos. \n Na seleção da opção correta, alterne a posição para dificultar.';
   } else if (aiQuestionType.value === 'SHORT_ANSWER') {
-    aiInstructions.value = 'A resposta deve ser curta e objetiva. Tempo de 30 segundos. \n Na seleção da opção correta, alterne a posição para dificultar.';
+    baseInstruction = 'A resposta deve ser curta e objetiva. Tempo de 30 segundos. \n Na seleção da opção correta, alterne a posição para dificultar.';
   }
+
+  if (aiSourceFlag.value === 'knowledge_base' || aiSourceFlag.value === 'hybrid') {
+    baseInstruction += '\n IMPORTANTE: O texto de cada pergunta deve ser claro, objetivo e fazer sentido por si só. Evite usar pronomes vagos (como "ele", "ela", "isso") e sempre especifique nomes, locais ou contextos para que a pergunta seja perfeitamente compreendida fora do contexto.';
+  }
+
+  // Se o campo estiver vazio ou for igual ao último texto padrão, apenas substitui
+  if (!aiInstructions.value || aiInstructions.value.trim() === lastDefaultInstruction.trim()) {
+    aiInstructions.value = baseInstruction;
+  } else if (lastDefaultInstruction && aiInstructions.value.includes(lastDefaultInstruction)) {
+    // Se o usuário adicionou texto ao lado do padrão, substitui só a parte padrão
+    aiInstructions.value = aiInstructions.value.replace(lastDefaultInstruction, baseInstruction);
+  } else if (!lastDefaultInstruction && aiInstructions.value === '4 opções de resposta para múltipla escolha e 30 segundos para responder.') {
+    // Trata o texto inicial que não tinha o 'alterne a posição'
+    aiInstructions.value = baseInstruction;
+  } else {
+    // Se o usuário apagou o texto padrão e escreveu do zero, apenas adicionamos o padrão ao final
+    // (ou deixamos como está, mas adicionar garante que a instrução da IA vá)
+    if (!aiInstructions.value.includes(baseInstruction)) {
+      aiInstructions.value = aiInstructions.value + '\n\n' + baseInstruction;
+    }
+  }
+
+  lastDefaultInstruction = baseInstruction;
 };
 
-watch(aiQuestionType, updateDefaultInstructions);
+watch([aiQuestionType, aiSourceFlag], updateDefaultInstructions, { immediate: true });
 
 const openAIGenerator = (quizId) => {
   activeQuizId.value = quizId === 'unassigned' ? null : quizId;
@@ -1078,9 +1104,9 @@ const generateQuestions = async () => {
 
   let sourceInstruction = '';
   if (aiSourceFlag.value === 'knowledge_base') {
-    sourceInstruction = 'ATENÇÃO: Você deve gerar as perguntas utilizando EXCLUSIVAMENTE as informações contidas na "BASE DE CONHECIMENTO FORNECIDA" abaixo. Não utilize seu conhecimento prévio sobre o assunto. IMPORTANTE: O texto de cada pergunta deve ser claro, objetivo e fazer sentido por si só. Evite usar pronomes vagos (como "ele", "ela", "isso") e sempre especifique nomes, locais ou contextos para que a pergunta seja perfeitamente compreendida fora do contexto do texto.';
+    sourceInstruction = 'ATENÇÃO: Você deve gerar as perguntas utilizando EXCLUSIVAMENTE as informações contidas na "BASE DE CONHECIMENTO FORNECIDA" abaixo. Não utilize seu conhecimento prévio sobre o assunto.';
   } else if (aiSourceFlag.value === 'hybrid') {
-    sourceInstruction = 'ATENÇÃO: Você pode utilizar a "BASE DE CONHECIMENTO FORNECIDA" abaixo junto com o seu próprio conhecimento geral para gerar as perguntas. IMPORTANTE: O texto de cada pergunta deve ser claro, objetivo e fazer sentido por si só. Evite usar pronomes vagos (como "ele", "ela", "isso") e sempre especifique nomes, locais ou contextos para que a pergunta seja perfeitamente compreendida fora do contexto do texto.';
+    sourceInstruction = 'ATENÇÃO: Você pode utilizar a "BASE DE CONHECIMENTO FORNECIDA" abaixo junto com o seu próprio conhecimento geral para gerar as perguntas.';
   }
 
   const prompt = `Você é um gerador de perguntas para um quiz.
