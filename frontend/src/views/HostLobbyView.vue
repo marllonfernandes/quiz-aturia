@@ -329,7 +329,7 @@ onMounted(() => {
   });
 
   socket.on('player_joined', (player) => {
-    players.value.push(player);
+    players.value = [...players.value, player];
   });
 
   socket.on('player_left', (id) => {
