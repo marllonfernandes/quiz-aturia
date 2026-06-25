@@ -62,15 +62,19 @@
 
           <!-- QUIZZES E PERGUNTAS UNIFICADO -->
           <div class="surface-100 p-4 shadow-2 flex flex-column gap-3 mb-2" style="border-radius: 1rem;">
-            <h3 class="m-0 text-xl text-center">Titulo Quiz</h3>
-            <div class="flex gap-2">
-              <InputText v-model="newQuizTitle" placeholder="Digite o título do quiz" class="w-full" />
-              <Button icon="pi pi-plus" @click="createQuiz" />
+            <div class="flex justify-content-between align-items-center">
+              <h3 class="m-0 text-xl"><i class="pi pi-folder mr-2"></i>Meus Quizzes</h3>
             </div>
-          </div>
+            <p class="text-sm text-600 m-0">
+              Crie e gerencie agrupadores (quizzes) para organizar suas perguntas e hospedar jogos.
+            </p>
+            <div class="flex gap-2 mt-2 mb-3">
+              <InputText v-model="newQuizTitle" placeholder="Digite o título do novo quiz" class="w-full" />
+              <Button label="Criar Quiz" icon="pi pi-plus" @click="createQuiz" />
+            </div>
           
-          <div v-if="quizzes.length === 0 && questions.length === 0" class="text-center text-500 py-3">Nenhum agrupador criado.</div>
-          <div v-else class="flex flex-column gap-4">
+            <div v-if="quizzes.length === 0 && questions.length === 0" class="text-center text-500 py-3">Nenhum agrupador criado.</div>
+            <div v-else class="flex flex-column gap-4">
             <div v-for="group in questionsByQuiz" :key="group.id" class="surface-card p-4 shadow-2" style="border-radius: 1rem; border: 1px solid var(--surface-border);">
               <div class="flex justify-content-between align-items-center mb-3 border-bottom-1 surface-border pb-2">
                 <h4 class="m-0 text-xl text-primary cursor-pointer hover:text-primary-600 transition-colors flex align-items-center gap-2" @click="toggleQuiz(group.id)" title="Clique para expandir/minimizar o quiz">
@@ -118,13 +122,38 @@
                         <div><strong>Respostas aceitas:</strong> {{ safeParseShortAnswer(q.correctAnswer) }}</div>
                       </div>
                       <div class="text-sm text-primary font-bold mt-1">Tempo: {{ q.timeLimit }}s</div>
+                      
+                      <!-- Display media and buttons to apply to all -->
+                      <div class="flex gap-4 mt-3">
+                        <div v-if="q.mediaUrl" class="flex flex-column gap-2 align-items-center">
+                          <span class="text-xs font-bold text-500">Mídia da Capa</span>
+                          <div class="border-round overflow-hidden bg-gray-100 flex justify-content-center align-items-center" style="height: 80px; width: 120px;">
+                            <img :src="q.mediaUrl" alt="Media" style="max-height: 100%; max-width: 100%; object-fit: contain;" />
+                          </div>
+                          <Button label="Aplicar em Todas" icon="pi pi-copy" size="small" severity="info" outlined @click="applyFieldToQuiz('mediaUrl', q.mediaUrl, group.id)" />
+                        </div>
+                        
+                        <div v-if="q.theme || q.audioUrl" class="flex flex-column gap-2 justify-content-center">
+                          <div v-if="q.theme" class="flex align-items-center gap-2">
+                            <span class="text-xs font-bold text-500 w-6rem">Tema:</span>
+                            <div class="w-2rem h-2rem border-round bg-cover bg-center shadow-1" :style="{ background: q.theme.startsWith('http') ? `url('${q.theme}')` : q.theme }"></div>
+                            <Button icon="pi pi-copy" size="small" severity="info" text @click="applyFieldToQuiz('theme', q.theme, group.id)" title="Aplicar tema em todas deste quiz" />
+                          </div>
+                          <div v-if="q.audioUrl" class="flex align-items-center gap-2">
+                            <span class="text-xs font-bold text-500 w-6rem">Áudio:</span>
+                            <span class="text-xs text-600 text-overflow-ellipsis overflow-hidden" style="max-width: 100px;">{{ q.audioUrl }}</span>
+                            <Button icon="pi pi-copy" size="small" severity="info" text @click="applyFieldToQuiz('audioUrl', q.audioUrl, group.id)" title="Aplicar áudio em todas deste quiz" />
+                          </div>
+                        </div>
+                      </div>
+
                     </div>
                   </div>
                 </div>
 
-
               </div>
             </div>
+          </div>
           </div>
 
         </div>
@@ -167,11 +196,17 @@
 
         <div class="flex gap-3 align-items-center mt-2">
           <Select v-model="newQ.timeLimit" :options="timeLimitOptions" optionLabel="label" optionValue="value" placeholder="Tempo Limite" class="w-full" />
-          <Select v-model="newQ.audioUrl" :options="audioOptions" optionLabel="label" optionValue="value" placeholder="Áudio de Fundo" class="w-full" />
+          <div class="w-full flex gap-2">
+            <Select v-model="newQ.audioUrl" :options="audioOptions" optionLabel="label" optionValue="value" placeholder="Áudio de Fundo" class="flex-1" />
+            <Button v-if="newQ.audioUrl && editingQuestionId" icon="pi pi-copy" severity="info" outlined @click="applyFieldToQuiz('audioUrl', newQ.audioUrl, activeQuizId)" title="Aplicar este áudio em todas perguntas deste quiz" />
+          </div>
         </div>
 
         <div class="flex flex-column gap-2 mt-2">
-          <label class="font-bold text-700">Tema de Fundo</label>
+          <div class="flex justify-content-between align-items-center">
+            <label class="font-bold text-700">Tema de Fundo</label>
+            <Button v-if="newQ.theme && editingQuestionId" label="Aplicar em Todas" icon="pi pi-copy" size="small" severity="info" outlined @click="applyFieldToQuiz('theme', newQ.theme, activeQuizId)" />
+          </div>
           <div class="flex flex-wrap gap-3">
             <div 
               v-for="t in themeOptions" :key="t.label"
@@ -190,7 +225,10 @@
         </div>
 
         <div class="flex flex-column gap-2 mt-2">
-          <label class="font-bold text-700">Mídia da Capa (Imagem/GIF)</label>
+          <div class="flex justify-content-between align-items-center">
+            <label class="font-bold text-700">Mídia da Capa (Imagem/GIF)</label>
+            <Button v-if="newQ.mediaUrl && editingQuestionId" label="Aplicar em Todas" icon="pi pi-copy" size="small" severity="info" outlined @click="applyFieldToQuiz('mediaUrl', newQ.mediaUrl, activeQuizId)" />
+          </div>
           
           <!-- Seleção rápida de mídia pré-definida -->
           <div class="flex flex-wrap gap-2 mb-2">
@@ -492,6 +530,40 @@ const cloneQuestion = (q, quizId) => {
     quizId: quizId === 'unassigned' ? null : quizId
   };
   isFormVisible.value = true;
+};
+
+const applyFieldToQuiz = async (field, value, targetQuizId) => {
+  if (targetQuizId === 'unassigned' || targetQuizId === null || targetQuizId === undefined) {
+    toast.add({ severity: 'info', summary: 'Aviso', detail: 'Esta pergunta não pertence a um quiz. Não é possível aplicar em lote.', life: 3000 });
+    return;
+  }
+  
+  // Find all questions for this quiz
+  const targetQuestions = questions.value.filter(q => q.quizId === targetQuizId);
+  const targetIds = targetQuestions.map(q => q.id);
+  
+  if (targetIds.length === 0) {
+    toast.add({ severity: 'info', summary: 'Info', detail: 'Nenhuma pergunta neste quiz para atualizar', life: 3000 });
+    return;
+  }
+  
+  const updateData = { [field]: value };
+  
+  try {
+    await axios.put(`${API_URL}/questions/bulk-update/fields`, {
+      questionIds: targetIds,
+      updateData
+    }, {
+      headers: { Authorization: `Bearer ${token.value}` }
+    });
+    
+    let fieldName = field === 'audioUrl' ? 'Áudio' : field === 'theme' ? 'Tema' : 'Mídia';
+    toast.add({ severity: 'success', summary: 'Sucesso', detail: `${fieldName} aplicado a ${targetIds.length} pergunta(s)!`, life: 3000 });
+    fetchQuestions();
+  } catch (e) {
+    console.error(e);
+    toast.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao aplicar campo em lote', life: 3000 });
+  }
 };
 
 const decodeToken = (t) => {
