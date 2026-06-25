@@ -686,7 +686,16 @@ const audioOptions = ref([
   { label: 'Tensão 1', value: '/sounds/tense.mp3' },
   { label: 'Tic Tac', value: '/sounds/tick.mp3' },
   { label: 'Pensativo', value: '/sounds/thinking.mp3' },
-  { label: 'Divertida', value: '/sounds/fun.mp3' }
+  { label: 'Divertida', value: '/sounds/fun.mp3' },
+  { label: 'Melodia de Sinos', value: '/sounds/bell-melody.mp3' },
+  { label: 'Relógio (Tic Tac 2)', value: '/sounds/clock-ticking.mp3' },
+  { label: 'Música Feliz', value: '/sounds/happy-music.mp3' },
+  { label: 'Funk Infantil', value: '/sounds/kids-funk.mp3' },
+  { label: 'Piano', value: '/sounds/piano.mp3' },
+  { label: 'Música Podcast', value: '/sounds/pod-music.mp3' },
+  { label: 'Violão Relaxante', value: '/sounds/relaxing-guitar.mp3' },
+  { label: 'Estrelas', value: '/sounds/starshine-migraine.mp3' },
+  { label: 'Ritmo', value: '/sounds/tempo.mp3' }
 ]);
 
 const dynamicQuizOptions = computed(() => {
