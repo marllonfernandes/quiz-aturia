@@ -51,22 +51,43 @@
         <div v-if="!hasAnswered" class="flex flex-column gap-3">
 
           <!-- MULTIPLE CHOICE -->
-          <div v-if="questionType === 'MULTIPLE_CHOICE'" class="grid gap-2 m-0">
-            <div v-for="(opt, idx) in options" :key="idx" class="col-12 md:col-6 p-1">
-              <Button @click="submitAnswer(idx)" :label="opt" :severity="getOptionSeverity(idx)"
-                class="w-full h-full py-3 px-2 text-xl md:text-2xl font-bold shadow-2" style="border-radius: 1rem; min-height: 4rem; white-space: normal; word-break: break-word; line-height: 1.2;" />
+          <div v-if="questionType === 'MULTIPLE_CHOICE'" class="flex flex-column gap-3 w-full m-0 max-w-full">
+            <div v-for="(opt, idx) in options" :key="idx" 
+              @click="submitAnswer(idx)"
+              :style="{ backgroundColor: getOptionStyle(idx).bg, color: getOptionStyle(idx).text, cursor: 'pointer' }"
+              class="w-full flex align-items-center justify-content-between p-3 font-bold border-round-3xl shadow-1 transition-transform transition-duration-200 hover:scale-105 active:scale-95"
+              style="border-radius: 2rem;">
+              <div class="flex align-items-center gap-3 text-left">
+                 <i :class="getOptionStyle(idx).icon" class="text-2xl"></i>
+                 <span style="font-size: 1.25rem; line-height: 1.2; word-break: break-word;">{{ opt }}</span>
+              </div>
+              <div class="flex align-items-center justify-content-center border-circle flex-shrink-0" style="background-color: rgba(0,0,0,0.05); width: 40px; height: 40px;">
+                <i class="pi pi-chevron-right text-lg"></i>
+              </div>
             </div>
           </div>
 
           <!-- TRUE FALSE -->
-          <div v-if="questionType === 'TRUE_FALSE'" class="grid gap-2 m-0">
-            <div class="col-12 md:col-6 p-1">
-              <Button @click="submitAnswer(0)" label="Verdadeiro" class="w-full py-4 text-3xl font-bold shadow-2 h-full"
-                style="border-radius: 1rem; min-height: 5rem;" />
+          <div v-if="questionType === 'TRUE_FALSE'" class="flex flex-column gap-3 w-full m-0 max-w-full">
+            <div
+              @click="submitAnswer(0)"
+              :style="{ backgroundColor: getOptionStyle(0).bg, color: getOptionStyle(0).text, cursor: 'pointer' }"
+              class="w-full flex align-items-center justify-content-between p-3 font-bold border-round-3xl shadow-1 transition-transform transition-duration-200 hover:scale-105 active:scale-95"
+              style="border-radius: 2rem;">
+              <div class="flex align-items-center gap-3">
+                 <i class="pi pi-check-circle text-2xl"></i>
+                 <span style="font-size: 1.5rem;">Verdadeiro</span>
+              </div>
             </div>
-            <div class="col-12 md:col-6 p-1">
-              <Button @click="submitAnswer(1)" label="Falso" severity="danger"
-                class="w-full py-4 text-3xl font-bold shadow-2 h-full" style="border-radius: 1rem; min-height: 5rem;" />
+            <div
+              @click="submitAnswer(1)"
+              :style="{ backgroundColor: getOptionStyle(3).bg, color: getOptionStyle(3).text, cursor: 'pointer' }"
+              class="w-full flex align-items-center justify-content-between p-3 font-bold border-round-3xl shadow-1 transition-transform transition-duration-200 hover:scale-105 active:scale-95"
+              style="border-radius: 2rem;">
+              <div class="flex align-items-center gap-3">
+                 <i class="pi pi-times-circle text-2xl"></i>
+                 <span style="font-size: 1.5rem;">Falso</span>
+              </div>
             </div>
           </div>
 
@@ -217,9 +238,17 @@ const playAudio = (url) => {
 
 
 
-const getOptionSeverity = (idx) => {
-  const severities = ['danger', 'info', 'warning', 'success', 'help', 'secondary'];
-  return severities[idx % severities.length];
+const getOptionStyle = (idx) => {
+  const styles = [
+    { bg: '#f0f4ff', text: '#31448a', icon: 'pi pi-sparkles' }, // light blue
+    { bg: '#eef8f0', text: '#2d6a36', icon: 'pi pi-video' }, // light green
+    { bg: '#f8f5eb', text: '#7d612e', icon: 'pi pi-desktop' }, // light beige
+    { bg: '#fdf2f2', text: '#8c3333', icon: 'pi pi-images' }, // light red
+    { bg: '#eef8fa', text: '#276873', icon: 'pi pi-question-circle' }, // light cyan
+    { bg: '#f6f0f8', text: '#672e7a', icon: 'pi pi-chart-bar' }, // light purple
+    { bg: '#f5f5f0', text: '#5a5a4a', icon: 'pi pi-file' }, // alternative beige
+  ];
+  return styles[idx % styles.length];
 };
 
 const joinRoom = () => {
