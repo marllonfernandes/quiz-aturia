@@ -2,8 +2,10 @@
   <div class="flex flex-column justify-content-center align-items-center pt-4 pb-5 px-3"
        :style="state === 'PLAYING' && currentQuestion?.theme ? `background: url(${currentQuestion.theme}) center/cover fixed; min-height: 100vh; width: 100vw; position: absolute; top: 0; left: 0;` : 'min-height: 100vh; width: 100vw; position: absolute; top: 0; left: 0;'">
     
+    <Button icon="pi pi-refresh" class="absolute top-0 right-0 m-3 z-5 shadow-2" rounded severity="secondary" @click="refreshPage" title="Atualizar página" style="background: rgba(255,255,255,0.7); backdrop-filter: blur(5px);" />
+
     <div class="w-full glass-card shadow-6 p-4 md:p-5 flex flex-column gap-4 text-center z-1"
-      style="max-width: 900px;">
+      style="max-width: 900px; max-height: 95vh; overflow-y: auto;">
 
       <!-- STATE: SETUP -->
       <div v-if="state === 'SETUP'" class="flex flex-column align-items-center w-full">
@@ -49,26 +51,41 @@
           <img :src="currentQuestion.mediaUrl" alt="Media da Pergunta" class="border-round shadow-4" style="max-height: 250px; max-width: 100%; object-fit: contain;" />
         </div>
 
-        <h1 class="text-4xl mb-5">{{ currentQuestion.text }}</h1>
+        <h1 class="text-3xl md:text-4xl mb-5">{{ currentQuestion.text }}</h1>
 
-        <div v-if="currentQuestion.type === 'MULTIPLE_CHOICE'" class="grid gap-2 max-w-full m-0">
+        <div v-if="currentQuestion.type === 'MULTIPLE_CHOICE'" class="flex flex-column gap-3 w-full m-0 max-w-full">
           <div v-for="(opt, idx) in currentQuestion.options" :key="idx"
-            :class="['col-12 md:col-6 lg:col-4 flex align-items-center justify-content-center shadow-2 p-3 font-bold', getOptionColorClass(idx)]"
-            style="min-height: 80px; font-size: 1.5rem; border-radius: 1rem; word-break: break-word;">
-            {{ opt }}
+            :style="{ backgroundColor: getOptionStyle(idx).bg, color: getOptionStyle(idx).text }"
+            class="w-full flex align-items-center justify-content-between p-3 font-bold shadow-1"
+            style="border-radius: 2rem;">
+            <div class="flex align-items-center gap-3 text-left">
+               <i :class="getOptionStyle(idx).icon" class="text-2xl"></i>
+               <span style="font-size: 1.25rem; line-height: 1.2; word-break: break-word;">{{ opt }}</span>
+            </div>
+            <div class="flex align-items-center justify-content-center border-circle flex-shrink-0" style="background-color: rgba(0,0,0,0.05); width: 40px; height: 40px;">
+              <i class="pi pi-chevron-right text-lg"></i>
+            </div>
           </div>
         </div>
 
-        <div v-else-if="currentQuestion.type === 'TRUE_FALSE'" class="grid gap-2 max-w-full m-0">
+        <div v-else-if="currentQuestion.type === 'TRUE_FALSE'" class="flex flex-column gap-3 w-full m-0 max-w-full">
           <div
-            class="col-12 md:col-6 bg-primary flex align-items-center justify-content-center shadow-2 text-white font-bold p-3"
-            style="min-height: 80px; font-size: 2rem; border-radius: 1rem;">
-            Verdadeiro
+            :style="{ backgroundColor: getOptionStyle(0).bg, color: getOptionStyle(0).text }"
+            class="w-full flex align-items-center justify-content-between p-3 font-bold shadow-1"
+            style="border-radius: 2rem;">
+            <div class="flex align-items-center gap-3">
+               <i class="pi pi-check-circle text-2xl"></i>
+               <span style="font-size: 1.5rem;">Verdadeiro</span>
+            </div>
           </div>
           <div
-            class="col-12 md:col-6 bg-red-500 flex align-items-center justify-content-center shadow-2 text-white font-bold p-3"
-            style="min-height: 80px; font-size: 2rem; border-radius: 1rem;">
-            Falso
+            :style="{ backgroundColor: getOptionStyle(3).bg, color: getOptionStyle(3).text }"
+            class="w-full flex align-items-center justify-content-between p-3 font-bold shadow-1"
+            style="border-radius: 2rem;">
+            <div class="flex align-items-center gap-3">
+               <i class="pi pi-times-circle text-2xl"></i>
+               <span style="font-size: 1.5rem;">Falso</span>
+            </div>
           </div>
         </div>
 
@@ -255,16 +272,21 @@ const isLastQuestion = computed(() => {
 
 
 
-const getOptionColorClass = (idx) => {
-  const classes = [
-    'bg-red-500 text-white',
-    'bg-blue-500 text-white',
-    'bg-yellow-500 text-900',
-    'bg-green-500 text-white',
-    'bg-purple-500 text-white',
-    'bg-gray-500 text-white'
+const refreshPage = () => {
+  window.location.reload();
+};
+
+const getOptionStyle = (idx) => {
+  const styles = [
+    { bg: '#f0f4ff', text: '#31448a', icon: 'pi pi-sparkles' }, // light blue
+    { bg: '#eef8f0', text: '#2d6a36', icon: 'pi pi-video' }, // light green
+    { bg: '#f8f5eb', text: '#7d612e', icon: 'pi pi-desktop' }, // light beige
+    { bg: '#fdf2f2', text: '#8c3333', icon: 'pi pi-images' }, // light red
+    { bg: '#eef8fa', text: '#276873', icon: 'pi pi-question-circle' }, // light cyan
+    { bg: '#f6f0f8', text: '#672e7a', icon: 'pi pi-chart-bar' }, // light purple
+    { bg: '#f5f5f0', text: '#5a5a4a', icon: 'pi pi-file' }, // alternative beige
   ];
-  return classes[idx % classes.length];
+  return styles[idx % styles.length];
 };
 
 const startGame = () => {
@@ -313,7 +335,7 @@ onMounted(() => {
   });
 
   socket.on('player_joined', (player) => {
-    players.value.push(player);
+    players.value = [...players.value, player];
   });
 
   socket.on('player_left', (id) => {
