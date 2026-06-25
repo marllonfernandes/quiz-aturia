@@ -1,7 +1,9 @@
 <template>
-  <div class="flex flex-column align-items-center pt-5 px-3"
+  <div class="flex flex-column align-items-center justify-content-center p-3 relative"
        :style="state === 'PLAYING' && currentTheme ? `background: url(${currentTheme}) center/cover fixed; min-height: 100vh; width: 100vw; position: absolute; top: 0; left: 0;` : 'min-height: 100vh; width: 100vw; position: absolute; top: 0; left: 0;'">
     
+    <Button icon="pi pi-refresh" class="absolute top-0 right-0 m-3 z-5 shadow-2" rounded severity="secondary" @click="refreshPage" title="Atualizar página" style="background: rgba(255,255,255,0.7); backdrop-filter: blur(5px);" />
+
     <div class="w-full max-w-30rem p-4 glass-card text-center z-1">
 
       <!-- STATE: JOIN/LOBBY -->
@@ -237,6 +239,10 @@ const playAudio = (url) => {
 };
 
 
+
+const refreshPage = () => {
+  window.location.reload();
+};
 
 const getOptionStyle = (idx) => {
   const styles = [

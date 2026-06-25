@@ -2,6 +2,8 @@
   <div class="flex flex-column justify-content-center align-items-center pt-4 pb-5 px-3"
        :style="state === 'PLAYING' && currentQuestion?.theme ? `background: url(${currentQuestion.theme}) center/cover fixed; min-height: 100vh; width: 100vw; position: absolute; top: 0; left: 0;` : 'min-height: 100vh; width: 100vw; position: absolute; top: 0; left: 0;'">
     
+    <Button icon="pi pi-refresh" class="absolute top-0 right-0 m-3 z-5 shadow-2" rounded severity="secondary" @click="refreshPage" title="Atualizar página" style="background: rgba(255,255,255,0.7); backdrop-filter: blur(5px);" />
+
     <div class="w-full glass-card shadow-6 p-4 md:p-5 flex flex-column gap-4 text-center z-1"
       style="max-width: 900px; max-height: 95vh; overflow-y: auto;">
 
@@ -269,6 +271,10 @@ const isLastQuestion = computed(() => {
 });
 
 
+
+const refreshPage = () => {
+  window.location.reload();
+};
 
 const getOptionStyle = (idx) => {
   const styles = [

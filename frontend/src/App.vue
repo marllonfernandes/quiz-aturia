@@ -27,7 +27,7 @@
       <router-view />
     </main>
 
-    <footer class="app-footer">
+    <footer class="app-footer" v-show="$route.name !== 'hostLobby' && $route.name !== 'playerLobby'">
       <nav class="menu-bar">
         <!-- Início -->
         <router-link to="/" class="menu-bar-item" active-class="menu-bar-item--active">
