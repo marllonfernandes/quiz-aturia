@@ -307,4 +307,40 @@ router.put('/:id', authMiddleware, async (req, res) => {
   }
 });
 
+// BULK UPDATE questions
+router.put('/bulk-update/fields', authMiddleware, async (req, res) => {
+  try {
+    const { questionIds, updateData } = req.body;
+    if (!questionIds || !Array.isArray(questionIds) || questionIds.length === 0) {
+      return res.status(400).json({ error: 'No questionIds provided' });
+    }
+
+    // Prepare data to update
+    const data = {};
+    if (updateData.audioUrl !== undefined) data.audioUrl = updateData.audioUrl;
+    if (updateData.theme !== undefined) data.theme = updateData.theme;
+    if (updateData.mediaUrl !== undefined) data.mediaUrl = updateData.mediaUrl;
+
+    if (Object.keys(data).length === 0) {
+      return res.status(400).json({ error: 'No valid fields to update' });
+    }
+
+    const whereClause = { id: { in: questionIds } };
+    
+    // Non-admin can only update their own questions
+    if (req.user.role !== 'admin') {
+      whereClause.userId = req.user.id;
+    }
+
+    const result = await prisma.question.updateMany({
+      where: whereClause,
+      data: data
+    });
+
+    res.json({ success: true, count: result.count });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

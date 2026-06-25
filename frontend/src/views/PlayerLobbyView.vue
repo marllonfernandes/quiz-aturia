@@ -51,19 +51,23 @@
         <div v-if="!hasAnswered" class="flex flex-column gap-3">
 
           <!-- MULTIPLE CHOICE -->
-          <div v-if="questionType === 'MULTIPLE_CHOICE'" class="grid gap-3 m-0">
-            <div v-for="(opt, idx) in options" :key="idx" class="col-12 md:col-6 p-0">
+          <div v-if="questionType === 'MULTIPLE_CHOICE'" class="grid gap-2 m-0">
+            <div v-for="(opt, idx) in options" :key="idx" class="col-12 md:col-6 p-1">
               <Button @click="submitAnswer(idx)" :label="opt" :severity="getOptionSeverity(idx)"
-                class="w-full h-8rem text-3xl font-bold shadow-2" style="border-radius: 1rem;" />
+                class="w-full h-full py-3 px-2 text-xl md:text-2xl font-bold shadow-2" style="border-radius: 1rem; min-height: 4rem; white-space: normal; word-break: break-word; line-height: 1.2;" />
             </div>
           </div>
 
           <!-- TRUE FALSE -->
-          <div v-if="questionType === 'TRUE_FALSE'" class="flex flex-column gap-3">
-            <Button @click="submitAnswer(0)" label="Verdadeiro" class="w-full h-8rem text-4xl font-bold shadow-2"
-              style="border-radius: 1rem;" />
-            <Button @click="submitAnswer(1)" label="Falso" severity="danger"
-              class="w-full h-8rem text-4xl font-bold shadow-2" style="border-radius: 1rem;" />
+          <div v-if="questionType === 'TRUE_FALSE'" class="grid gap-2 m-0">
+            <div class="col-12 md:col-6 p-1">
+              <Button @click="submitAnswer(0)" label="Verdadeiro" class="w-full py-4 text-3xl font-bold shadow-2 h-full"
+                style="border-radius: 1rem; min-height: 5rem;" />
+            </div>
+            <div class="col-12 md:col-6 p-1">
+              <Button @click="submitAnswer(1)" label="Falso" severity="danger"
+                class="w-full py-4 text-3xl font-bold shadow-2 h-full" style="border-radius: 1rem; min-height: 5rem;" />
+            </div>
           </div>
 
           <!-- SHORT ANSWER -->
