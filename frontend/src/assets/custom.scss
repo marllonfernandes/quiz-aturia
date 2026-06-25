@@ -27,11 +27,13 @@ dd {
 
 html {
   overflow-x: hidden;
+  overscroll-behavior: none;
 }
 
 body {
   scroll-behavior: smooth;
   line-height: 1.5;
+  overscroll-behavior: none;
 }
 
 img {
