@@ -281,7 +281,7 @@ async function main() {
     await prisma.question.create({
       data: {
         text: q.text,
-        type: "multiple-choice",
+        type: "MULTIPLE_CHOICE",
         options: JSON.stringify(q.options),
         correctAnswer: JSON.stringify(q.correctAnswer),
         timeLimit: 20, // tempo acessível para crianças lerem

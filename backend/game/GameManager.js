@@ -44,6 +44,7 @@ class GameManager {
 
         this.rooms[pin] = {
           hostId: socket.id,
+          hostUserId: userId,
           players: [],
           state: 'LOBBY',
           questions: questions,
@@ -87,9 +88,26 @@ class GameManager {
       }
     });
 
-    socket.on('start_game', (pin) => {
+    socket.on('start_game', (payload) => {
+      const pin = typeof payload === 'string' ? payload : payload.pin;
+      const token = typeof payload === 'object' ? payload.token : null;
       const room = this.rooms[pin];
+      
+      let isHost = false;
       if (room && room.hostId === socket.id) {
+        isHost = true;
+      } else if (room && token && room.hostUserId) {
+        try {
+          const jwt = require('jsonwebtoken');
+          const decoded = jwt.verify(token, process.env.JWT_SECRET || 'super-secret');
+          if (decoded.id === room.hostUserId) {
+             isHost = true;
+             room.hostId = socket.id;
+          }
+        } catch(e) {}
+      }
+
+      if (isHost) {
         room.state = 'PLAYING';
         this.nextQuestion(pin);
       }
@@ -141,9 +159,26 @@ class GameManager {
       }
     });
 
-    socket.on('next_question', (pin) => {
+    socket.on('next_question', (payload) => {
+      const pin = typeof payload === 'string' ? payload : payload.pin;
+      const token = typeof payload === 'object' ? payload.token : null;
       const room = this.rooms[pin];
+      
+      let isHost = false;
       if (room && room.hostId === socket.id) {
+        isHost = true;
+      } else if (room && token && room.hostUserId) {
+        try {
+          const jwt = require('jsonwebtoken');
+          const decoded = jwt.verify(token, process.env.JWT_SECRET || 'super-secret');
+          if (decoded.id === room.hostUserId) {
+             isHost = true;
+             room.hostId = socket.id;
+          }
+        } catch(e) {}
+      }
+
+      if (isHost) {
         this.nextQuestion(pin);
       }
     });

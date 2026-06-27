@@ -297,11 +297,11 @@ const getOptionStyle = (idx) => {
 };
 
 const startGame = () => {
-  socket.emit('start_game', pin.value);
+  socket.emit('start_game', { pin: pin.value, token: adminToken.value });
 };
 
 const nextQuestion = () => {
-  socket.emit('next_question', pin.value);
+  socket.emit('next_question', { pin: pin.value, token: adminToken.value });
 };
 
 const fetchQuizzes = async () => {
